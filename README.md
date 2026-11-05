@@ -12,7 +12,10 @@ App web nhỏ để chia tiền chi tiêu chung trong căn hộ: tiền nhà, đ
 - **Sao lưu**: xuất và nhập file JSON.
 
 ## Dữ liệu
-Toàn bộ dữ liệu và API key lưu trong trình duyệt (localStorage) trên máy đang dùng, không gửi lên đâu ngoài các lần gọi Claude API. File sao lưu không chứa API key.
+- Dữ liệu lưu trong trình duyệt (localStorage) trên máy đang dùng.
+- Tuỳ chọn **Lưu trên Neon** (Cài đặt): dán chuỗi kết nối Neon, app tự tạo bảng `chi_tieu_nha` và lưu toàn bộ dữ liệu thành một dòng (cột `data` kiểu jsonb). Mỗi lần sửa sẽ tự lưu lên; mở app hoặc quay lại tab sẽ tự tải bản mới. Nếu hai máy cùng sửa lúc chưa đồng bộ, app hỏi giữ bản nào.
+- Chuỗi kết nối Neon và API key Claude chỉ lưu trong trình duyệt máy đang dùng: không nằm trong code, không lên GitHub, API key không được gửi lên Neon.
+- File sao lưu không chứa API key.
 
 ## Chạy trên GitHub Pages
 1. Vào **Settings → Pages** của repo.

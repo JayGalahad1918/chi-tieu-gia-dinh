@@ -51,7 +51,9 @@ button,input,select,textarea{font:inherit;color:inherit}
 .top{position:sticky;top:0;z-index:5;background:var(--bg)}
 .top .wrap{display:flex;align-items:center;gap:8px;height:60px}
 .brand{font-weight:800;font-size:18px;letter-spacing:-.02em;margin-right:auto;display:flex;align-items:center;gap:8px}
-.brand img{width:28px;height:28px;border-radius:9px}
+.brand img{width:28px;height:28px;border-radius:9px;display:block}
+.logo{position:relative;display:inline-flex}
+.syncdot{position:absolute;right:-3px;bottom:-3px;width:12px;height:12px;border-radius:999px;border:2.5px solid var(--bg)}
 .month{display:flex;align-items:center;gap:4px;background:var(--surface);border-radius:999px;padding:4px;box-shadow:var(--shadow)}
 .month b{font-weight:700;font-size:14px;min-width:104px;text-align:center}
 .iconbtn{width:34px;height:34px;border-radius:999px;border:0;background:var(--surface-2);display:grid;place-items:center;cursor:pointer}
@@ -247,7 +249,7 @@ input[type=date].inp,input[type=month].inp{min-width:0;appearance:none;-webkit-a
 <body>
 <header class="top">
   <div class="wrap">
-    <div class="brand"><img src="icon.svg" alt="">Chi tiêu nhà</div>
+    <div class="brand"><span class="logo"><img src="icon.svg" alt=""><span id="syncDot" class="syncdot" hidden></span></span>Chi tiêu nhà</div>
     <div class="month" id="monthBox">
       <button class="iconbtn" id="mPrev" aria-label="Tháng trước"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button>
       <b id="mLabel"></b>
@@ -372,12 +374,21 @@ function load() {
   } catch (e) { console.warn(e); return blank(); }
 }
 let S = load();
+/* Thông tin chỉ thuộc máy này: chuỗi kết nối Neon, phiên bản đã đồng bộ */
+const LKEY = 'ctgd.local';
+let L = (() => {
+  const d = { neonUrl:'', rev:0, dirty:false, lastSync:0 };
+  try { return Object.assign(d, JSON.parse(localStorage.getItem(LKEY) || '{}')); } catch { return d; }
+})();
+function saveL() { try { localStorage.setItem(LKEY, JSON.stringify(L)); } catch {} }
+let editSeq = 0;
 function save() {
   try { localStorage.setItem(KEY, JSON.stringify(S)); }
   catch (e) { toast('Không lưu được dữ liệu vào trình duyệt'); }
+  if (L.neonUrl) { editSeq++; L.dirty = true; saveL(); schedulePush(); }
 }
 
-const UI = { tab:'summary', month:curMonth(), images:[], aiText:'', result:null, lastUsage:null, busy:false, error:'', showKey:false };
+const UI = { sync:'off', syncErr:'', tab:'summary', month:curMonth(), images:[], aiText:'', result:null, lastUsage:null, busy:false, error:'', showKey:false };
 
 const memberById = id => S.members.find(m => m.id === id);
 const activeIn = (x, m) => (!x.from || x.from <= m) && (!x.to || m < x.to);
@@ -1188,6 +1199,191 @@ function renderCost(v) {
 }
 function monthOfTs(t) { const d = new Date(t); return `${d.getFullYear()}-${pad(d.getMonth() + 1)}`; }
 
+/* ---------- Đồng bộ Neon ---------- */
+const NEON_MOD = 'https://cdn.jsdelivr.net/npm/@neondatabase/serverless@1/+esm';
+const ROW_ID = 'main';
+const Q_CREATE = 'create table if not exists chi_tieu_nha (id text primary key, data jsonb not null, rev bigint not null default 1, updated_at timestamptz not null default now())';
+const Q_SELECT = 'select data, rev from chi_tieu_nha where id = $1';
+const Q_INSERT = 'insert into chi_tieu_nha (id, data, rev) values ($1, $2::jsonb, 1) on conflict (id) do nothing returning rev';
+const Q_UPDATE = 'update chi_tieu_nha set data = $1::jsonb, rev = rev + 1, updated_at = now() where id = $2 and rev = $3 returning rev';
+const Q_FORCE = 'update chi_tieu_nha set data = $1::jsonb, rev = rev + 1, updated_at = now() where id = $2 returning rev';
+let neonSql = null, pushTimer = null, pushing = false, pushAgain = false, pulling = false;
+
+async function getSql() {
+  if (!L.neonUrl) throw new Error('Chưa kết nối Neon');
+  if (!neonSql) {
+    let mod;
+    try { mod = await import(NEON_MOD); }
+    catch { throw new Error('Không tải được thư viện Neon. Kiểm tra mạng rồi thử lại.'); }
+    neonSql = mod.neon(L.neonUrl, { disableWarningInBrowsers:true });
+  }
+  return neonSql;
+}
+function errText(e) {
+  const m = String(e && e.message || e);
+  if (/password authentication failed/i.test(m)) return 'Sai tên hoặc mật khẩu trong chuỗi kết nối';
+  if (/does not exist/i.test(m) && /database/i.test(m)) return 'Không có database này trên Neon';
+  if (/Failed to fetch|NetworkError|Load failed/i.test(m)) return 'Không kết nối được tới Neon. Kiểm tra mạng.';
+  return m;
+}
+/** Dữ liệu gửi lên Neon: không kèm API key Claude */
+function syncPayload() {
+  const c = JSON.parse(JSON.stringify(S));
+  delete c.askMove;
+  if (c.settings) c.settings.apiKey = '';
+  return c;
+}
+const parseData = d => typeof d === 'string' ? JSON.parse(d) : d;
+const hasData = d => !!(d && ((d.members || []).length || (d.expenses || []).length || (d.recurring || []).length));
+function applyRemote(data) {
+  const key = S.settings.apiKey;
+  const d = Object.assign(blank(), data || {});
+  d.settings = Object.assign(blank().settings, d.settings || {});
+  for (const m of MODELS) if (!d.settings.prices[m.id]) d.settings.prices[m.id] = { in:m.in, out:m.out };
+  d.settings.apiKey = key;
+  delete d.askMove;
+  S = d;
+  try { localStorage.setItem(KEY, JSON.stringify(S)); } catch {}
+  applyTheme();
+}
+function setSync(state, err = '') { UI.sync = state; UI.syncErr = err; paintSync(); }
+function syncLabel() {
+  const t = L.lastSync ? new Date(L.lastSync).toLocaleTimeString('vi-VN', { hour:'2-digit', minute:'2-digit' }) : '';
+  return ({
+    off:'Chưa kết nối Neon',
+    ok:'Đã lưu lên Neon' + (t ? ` lúc ${t}` : ''),
+    pending:'Có thay đổi, sắp lưu lên Neon',
+    saving:'Đang lưu lên Neon…',
+    error:'Lỗi đồng bộ: ' + UI.syncErr,
+  })[UI.sync] || '';
+}
+function paintSync() {
+  const color = { ok:'var(--pos)', pending:'#E8A33D', saving:'#E8A33D', error:'var(--neg)' }[UI.sync];
+  const dot = $('#syncDot');
+  if (dot) { dot.hidden = !L.neonUrl; dot.style.background = color || 'var(--line)'; dot.title = syncLabel(); }
+  const st = $('#neonStatus');
+  if (st) { st.textContent = syncLabel(); st.style.color = UI.sync === 'error' ? 'var(--neg)' : ''; }
+  const sd = $('#neonDot'); if (sd) sd.style.background = color || 'var(--line)';
+}
+function schedulePush() {
+  setSync('pending');
+  clearTimeout(pushTimer);
+  pushTimer = setTimeout(pushNow, 1200);
+}
+async function pushNow() {
+  if (!L.neonUrl || !L.dirty) return;
+  if (pushing) { pushAgain = true; return; }
+  pushing = true; setSync('saving');
+  let conflict = false;
+  try {
+    const sql = await getSql();
+    const seq = editSeq;
+    const rows = await sql.query(Q_UPDATE, [JSON.stringify(syncPayload()), ROW_ID, L.rev]);
+    if (rows.length) {
+      L.rev = Number(rows[0].rev); L.lastSync = Date.now();
+      if (editSeq === seq) L.dirty = false;
+      saveL(); setSync(L.dirty ? 'pending' : 'ok');
+    } else conflict = true;
+  } catch (e) { setSync('error', errText(e)); }
+  finally { pushing = false; }
+  if (conflict) return pullNow();
+  if (pushAgain || (L.dirty && UI.sync === 'pending')) { pushAgain = false; schedulePush(); }
+}
+async function pullNow() {
+  if (!L.neonUrl || pulling) return;
+  pulling = true;
+  let thenPush = false;
+  try {
+    const sql = await getSql();
+    const rows = await sql.query(Q_SELECT, [ROW_ID]);
+    if (!rows.length) {
+      await sql.query(Q_CREATE);
+      const ins = await sql.query(Q_INSERT, [ROW_ID, JSON.stringify(syncPayload())]);
+      if (ins.length) { L.rev = 1; L.dirty = false; L.lastSync = Date.now(); saveL(); setSync('ok'); }
+      return;
+    }
+    const rRev = Number(rows[0].rev), data = parseData(rows[0].data);
+    if (rRev === L.rev) { if (L.dirty) thenPush = true; else { L.lastSync = Date.now(); saveL(); setSync('ok'); } return; }
+    if (!L.dirty) {
+      applyRemote(data); L.rev = rRev; L.lastSync = Date.now(); saveL(); setSync('ok');
+      if (!$('#sheet').open) render();
+      return;
+    }
+    askConflict(data, rRev);
+  } catch (e) { setSync('error', errText(e)); }
+  finally {
+    pulling = false;
+    if (thenPush) pushNow();   // đặt trong finally vì các nhánh trên có 'return'
+  }
+}
+async function forcePush() {
+  try {
+    setSync('saving');
+    const sql = await getSql();
+    const rows = await sql.query(Q_FORCE, [JSON.stringify(syncPayload()), ROW_ID]);
+    L.rev = Number(rows[0].rev); L.dirty = false; L.lastSync = Date.now(); saveL(); setSync('ok');
+  } catch (e) { setSync('error', errText(e)); }
+}
+function askConflict(data, rRev) {
+  setSync('error', 'dữ liệu trên Neon và trên máy này khác nhau, cần chọn bản giữ lại');
+  const ids = d => new Set((d.expenses || []).map(e => e.id));
+  const only = (d, other) => { const o = ids(other); const list = (d.expenses || []).filter(e => !o.has(e.id)).map(e => `${e.desc} ${vnd(e.amount)}`); return list.length ? 'Có thêm: ' + list.slice(0, 4).join(', ') + (list.length > 4 ? `… (${list.length} khoản)` : '') : ''; };
+  const n = (d, other) => only(d, other) || `${(d.expenses || []).length} khoản phát sinh, ${(d.recurring || []).filter(t => !t.to).length} khoản định kỳ`;
+  openSheet('Chọn bản dữ liệu giữ lại', `
+    <p style="margin-top:0">Dữ liệu trên Neon vừa được sửa từ máy khác, trong khi máy này cũng có thay đổi chưa kịp lưu lên.</p>
+    <div class="list" style="margin-bottom:8px">
+      <div class="tile" style="cursor:default;box-shadow:none;background:var(--surface-2)"><div class="grow"><div class="t">Trên Neon</div><div class="meta">${esc(n(data, S))}</div></div></div>
+      <div class="tile" style="cursor:default;box-shadow:none;background:var(--surface-2)"><div class="grow"><div class="t">Trên máy này</div><div class="meta">${esc(n(S, data))}</div></div></div>
+    </div>
+    <p class="muted small">Bản không chọn sẽ bị thay thế. Nếu chưa chắc, vào Cài đặt xuất file sao lưu trước.</p>`,
+    [
+      { label:'Giữ bản máy này', run:() => { forcePush(); } },
+      { label:'Dùng bản trên Neon', cls:'primary', run:() => { applyRemote(data); L.rev = rRev; L.dirty = false; L.lastSync = Date.now(); saveL(); setSync('ok'); render(); } },
+    ]);
+}
+async function connectNeon(url) {
+  url = url.trim();
+  if (!/^postgres(ql)?:\/\/[^@\s]+@[^/\s]+\/\S+$/.test(url)) throw new Error('Chuỗi kết nối phải có dạng postgresql://tên:mật-khẩu@host/tên-db');
+  const prev = { ...L };
+  L.neonUrl = url; neonSql = null;
+  try {
+    const sql = await getSql();
+    await sql.query(Q_CREATE);
+    const rows = await sql.query(Q_SELECT, [ROW_ID]);
+    if (!rows.length) {
+      await sql.query(Q_INSERT, [ROW_ID, JSON.stringify(syncPayload())]);
+      Object.assign(L, { rev:1, dirty:false, lastSync:Date.now() }); saveL(); setSync('ok');
+      return 'Đã kết nối, dữ liệu trên máy này đã được lưu lên Neon';
+    }
+    const rRev = Number(rows[0].rev), data = parseData(rows[0].data);
+    if (!hasData(S) || !hasData(data)) {
+      if (hasData(data)) { applyRemote(data); Object.assign(L, { rev:rRev, dirty:false, lastSync:Date.now() }); saveL(); setSync('ok'); return 'Đã kết nối và tải dữ liệu từ Neon về'; }
+      Object.assign(L, { rev:rRev, dirty:true }); saveL(); await pushNow();
+      return 'Đã kết nối, dữ liệu trên máy này đã được lưu lên Neon';
+    }
+    Object.assign(L, { rev:rRev, dirty:false }); saveL();
+    setTimeout(() => openSheet('Neon đã có dữ liệu', `
+      <p style="margin-top:0">Trên Neon đã có dữ liệu (${(data.expenses || []).length} khoản phát sinh), máy này cũng có (${S.expenses.length} khoản phát sinh). Dùng bản nào?</p>
+      <p class="muted small">Bản không chọn sẽ bị thay thế.</p>`,
+      [
+        { label:'Ghi bản máy này lên Neon', run:() => { forcePush(); } },
+        { label:'Dùng bản trên Neon', cls:'primary', run:() => { applyRemote(data); L.lastSync = Date.now(); saveL(); setSync('ok'); render(); } },
+      ]), 50);
+    setSync('ok');
+    return 'Đã kết nối Neon';
+  } catch (e) {
+    Object.assign(L, prev); neonSql = null; saveL();
+    throw new Error(errText(e));
+  }
+}
+function disconnectNeon() {
+  clearTimeout(pushTimer);
+  L = { neonUrl:'', rev:0, dirty:false, lastSync:0 }; neonSql = null; saveL();
+  setSync('off');
+}
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && L.neonUrl) pullNow(); });
+window.addEventListener('online', () => { if (L.neonUrl) pullNow(); });
+
 /* ---------- Cài đặt ---------- */
 function renderSettings(v) {
   const s = S.settings;
@@ -1229,8 +1425,20 @@ function renderSettings(v) {
     <label class="f" style="margin-top:12px"><span>Tỷ giá (đồng cho 1 USD)</span><input class="inp" id="rate" type="number" min="1" value="${s.rate}"></label>
     <button class="link" id="resetPrices">Về giá mặc định</button>
 
+    <h2>Lưu trên Neon</h2>
+    <p class="sub">${L.neonUrl ? 'Mỗi lần sửa, dữ liệu tự lưu lên Neon. Mở app trên máy khác, kết nối cùng chuỗi là thấy cùng dữ liệu.' : 'Kết nối Neon để dữ liệu không mất khi đổi máy và dùng được trên nhiều thiết bị.'}</p>
+    <div class="panel pad">${L.neonUrl ? `
+      <div class="row"><span class="dot" id="neonDot"></span><span id="neonStatus" class="grow small"></span></div>
+      <div class="muted small" style="margin:6px 0 14px">Máy chủ: ${esc(neonHost(L.neonUrl))}</div>
+      <div class="btnrow"><button class="btn" id="neonSync">Đồng bộ ngay</button><button class="btn danger" id="neonOff">Ngắt kết nối</button></div>` : `
+      <label class="f"><span>Chuỗi kết nối</span>
+        <input class="inp" id="neonUrl" type="password" placeholder="postgresql://…@ep-….neon.tech/neondb?sslmode=require" autocomplete="off" spellcheck="false">
+        <div class="hint">Lấy trong Neon ở nút Connect của project. Chuỗi chỉ lưu trong trình duyệt máy này, không nằm trên GitHub. API key Claude không được gửi lên Neon.</div></label>
+      <div class="row"><button class="btn primary" id="neonOn">Kết nối</button><span id="neonMsg" class="small grow"></span></div>`}
+    </div>
+
     <h2>Sao lưu</h2>
-    <p class="sub">Dữ liệu nằm trong trình duyệt này. Xuất file sao lưu định kỳ để đổi máy hay xoá dữ liệu trình duyệt không bị mất.</p>
+    <p class="sub">${L.neonUrl ? 'Ngoài Neon, bạn vẫn có thể xuất file sao lưu để giữ thêm một bản riêng.' : 'Dữ liệu nằm trong trình duyệt này. Xuất file sao lưu định kỳ để đổi máy hay xoá dữ liệu trình duyệt không bị mất.'}</p>
     <div class="btnrow">
       <button class="btn" id="exportBtn">Xuất file sao lưu</button>
       <button class="btn" id="importBtn">Nhập từ file</button>
@@ -1249,12 +1457,25 @@ function renderSettings(v) {
   $('#rate').onchange = e => { s.rate = Math.max(1, Number(e.target.value) || 26000); save(); };
   $('#resetPrices').onclick = () => { s.prices = Object.fromEntries(MODELS.map(m => [m.id, { in:m.in, out:m.out }])); save(); render(); toast('Đã về giá mặc định'); };
   $('#exportBtn').onclick = exportData;
+  const on = $('#neonOn');
+  if (on) on.onclick = async () => {
+    const msg = $('#neonMsg'); on.disabled = true; msg.style.color = ''; msg.textContent = 'Đang kết nối…';
+    try { const r = await connectNeon($('#neonUrl').value); toast(r); render(); }
+    catch (e) { msg.textContent = e.message; msg.style.color = 'var(--neg)'; on.disabled = false; }
+  };
+  const sy = $('#neonSync'); if (sy) sy.onclick = () => pullNow();
+  const off = $('#neonOff'); if (off) off.onclick = () => {
+    if (!confirm('Ngắt kết nối Neon trên máy này? Dữ liệu vẫn còn trên máy này và trên Neon.')) return;
+    disconnectNeon(); render(); toast('Đã ngắt kết nối Neon');
+  };
+  paintSync();
   $('#importBtn').onclick = () => $('#importIn').click();
   $('#wipeBtn').onclick = () => {
-    if (!confirm('Xoá toàn bộ thành viên, khoản chi và lịch sử? Không hoàn tác được.')) return;
+    if (!confirm(L.neonUrl ? 'Xoá toàn bộ thành viên, khoản chi và lịch sử, cả trên máy này lẫn trên Neon? Không hoàn tác được.' : 'Xoá toàn bộ thành viên, khoản chi và lịch sử? Không hoàn tác được.')) return;
     const key = S.settings.apiKey; S = blank(); S.settings.apiKey = key; save(); render(); toast('Đã xoá dữ liệu');
   };
 }
+function neonHost(u) { try { return new URL(u.replace(/^postgres(ql)?:/, 'http:')).hostname; } catch { return '?'; } }
 function editMember(id) {
   const x = id ? memberById(id) : null;
   const used = new Set(currentMembers().map(m => m.color));
@@ -1355,6 +1576,8 @@ applyTheme();
 matchMedia('(prefers-color-scheme: dark)').addEventListener('change', applyTheme);
 render();
 if (S.askMove) askMoveOld();
+paintSync();
+if (L.neonUrl) pullNow();
 </script>
 </body>
 </html>
