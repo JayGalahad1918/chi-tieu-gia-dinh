@@ -218,6 +218,8 @@ table.t tr.sel td{background:var(--accent-soft);font-weight:700}
 .stats b{display:block;font-size:21px;font-weight:800;letter-spacing:-.01em}
 .stats span{font-size:12.5px;color:var(--muted)}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.grid2 > *,.rv .fields > *{min-width:0}
+input[type=date].inp,input[type=month].inp{min-width:0;appearance:none;-webkit-appearance:none;display:block}
 
 #toast{position:fixed;left:50%;bottom:calc(96px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 18px;border-radius:999px;font-size:14px;font-weight:600;opacity:0;pointer-events:none;transition:opacity .2s;z-index:20;max-width:90vw;text-align:center}
 #toast.show{opacity:1}
@@ -319,7 +321,7 @@ function parseMoney(str) {
    ========================================================= */
 function blank() {
   return {
-    v: 1,
+    v: 3,
     members: [],      // {id,name,color,from,to}
     recurring: [],    // {id,name,amount,payerId,from,to}
     months: {},       // 'YYYY-MM': {rec:{tplId:{on,amount,payerId}}}
@@ -328,6 +330,18 @@ function blank() {
     aiLog: [],        // {t,model,inTok,outTok,imgTok,images,items}
   };
 }
+/** v2: thành viên luôn được tính ở mọi tháng (chỉ ngưng khi xoá).
+    Khoản chi đã lưu khi app tưởng thiếu người thì chia lại cho đủ người. */
+function migrateV2(d) {
+  const act = (m, useFrom) => d.members.filter(x => (!useFrom || !x.from || x.from <= m) && (!x.to || m < x.to)).map(x => x.id);
+  const same = (a, b) => a.length === b.length && a.every(x => b.includes(x));
+  for (const e of d.expenses || []) {
+    const before = act(e.month, true), after = act(e.month, false);
+    if (Array.isArray(e.participants) && same(e.participants, before) && after.length > before.length) e.participants = after;
+  }
+  for (const x of d.members || []) x.from = '';
+  d.v = 2;
+}
 function load() {
   try {
     const raw = localStorage.getItem(KEY);
@@ -335,6 +349,8 @@ function load() {
     const d = Object.assign(blank(), JSON.parse(raw));
     d.settings = Object.assign(blank().settings, d.settings || {});
     for (const m of MODELS) if (!d.settings.prices[m.id]) d.settings.prices[m.id] = {in:m.in, out:m.out};
+    if ((d.v || 1) < 2) migrateV2(d);
+    if ((d.v || 1) < 3) { if ((d.expenses || []).length || (d.recurring || []).length) d.askMove = true; d.v = 3; }
     return d;
   } catch (e) { console.warn(e); return blank(); }
 }
@@ -661,9 +677,10 @@ function editExpense(id) {
   openSheet(e ? 'Sửa khoản chi' : 'Thêm khoản chi', `
     <label class="f"><span>Nội dung</span><input class="inp" name="desc" placeholder="vd: Đi chợ, mua nước giặt" value="${esc(e ? e.desc : '')}" autocomplete="off"></label>
     ${moneyField('amount', e ? e.amount : 0, 'Số tiền')}
+    <label class="f"><span>Ai trả</span>${payerSelect('payer', payer, pool)}</label>
     <div class="grid2">
-      <label class="f"><span>Ai trả</span>${payerSelect('payer', payer, pool)}</label>
-      <label class="f"><span>Ngày trả</span><input class="inp" type="date" name="date" value="${esc(e ? e.date : defaultDate(m))}"></label>
+      <label class="f"><span>Tính vào tháng</span><input class="inp" type="month" name="month" value="${esc(m)}" required></label>
+      <label class="f"><span>Ngày trả</span><input class="inp" type="date" name="date" value="${esc(e ? e.date : todayISO())}"></label>
     </div>
     <div class="f"><span style="display:block;font-size:13px;font-weight:600;margin-bottom:6px">Chia đều cho</span>
       <div class="chips">${pool.map(x => `<button type="button" class="chip" data-part="${x.id}" aria-pressed="${parts.has(x.id)}">${avEl(x, 'sm')}${esc(x.name)}</button>`).join('')}</div>
@@ -676,8 +693,9 @@ function editExpense(id) {
         if (!amount || isNaN(amount)) { toast('Nhập số tiền'); f.amount.focus(); return false; }
         if (!f.payer.value) { toast('Chọn người trả'); return false; }
         if (!sel.length) { toast('Chọn ít nhất một người để chia'); return false; }
-        const date = f.date.value || defaultDate(m);
-        const obj = { desc:f.desc.value.trim() || 'Khoản chi', amount, payerId:f.payer.value, date, month:date.slice(0, 7), participants:sel };
+        const month = /^\d{4}-\d{2}$/.test(f.month.value) ? f.month.value : m;
+        const date = f.date.value || todayISO();
+        const obj = { desc:f.desc.value.trim() || 'Khoản chi', amount, payerId:f.payer.value, date, month, participants:sel };
         if (e) Object.assign(e, obj);
         else S.expenses.push({ id:uid(), source:'manual', ...obj });
         save();
@@ -980,10 +998,10 @@ async function runAI() {
     const rows = raw.map(k => {
       const amount = typeof k.so_tien === 'number' ? Math.round(k.so_tien) : parseMoney(k.so_tien);
       const date = /^\d{4}-\d{2}-\d{2}$/.test(k.ngay || '') ? k.ngay : '';
-      return { keep:true, desc:String(k.mo_ta || '').trim(), amount:isNaN(amount) ? 0 : amount, payerId:matchMember(k.nguoi_chi, members), rawPayer:k.nguoi_chi || '', date:date || defaultDate(UI.month), noDate:!date, recId:matchRec(k.dinh_ky) };
+      return { keep:true, desc:String(k.mo_ta || '').trim(), amount:isNaN(amount) ? 0 : amount, payerId:matchMember(k.nguoi_chi, members), rawPayer:k.nguoi_chi || '', date:date || todayISO(), noDate:!date, recId:matchRec(k.dinh_ky) };
     });
     UI.lastUsage = logUsage(data, body.model, { imgTok, txtTok, images:UI.images.length, items:rows.length, kind:'read' });
-    UI.result = { rows, note:blk && blk.input && blk.input.ghi_chu || '' };
+    UI.result = { rows, month:UI.month, note:blk && blk.input && blk.input.ghi_chu || '' };
     if (!rows.length) UI.error = 'Không thấy khoản chi nào trong ảnh. Thử ảnh rõ hơn hoặc dán chữ vào ô bên trên.';
   } catch (e) {
     UI.error = e.message === 'Failed to fetch' ? 'Không kết nối được tới Claude API. Kiểm tra mạng rồi thử lại.' : e.message;
@@ -998,6 +1016,10 @@ function renderReview(r) {
   const kept = r.rows.filter(x => x.keep);
   return `
     <h2>Xem lại trước khi lưu</h2>
+    <div class="panel pad" style="margin-bottom:10px">
+      <label class="f" style="margin:0"><span>Tính tất cả vào tháng</span><input class="inp" type="month" id="rvMonth" value="${esc(r.month || UI.month)}"></label>
+      <div class="hint">Ngày trả của từng khoản vẫn giữ riêng. Hoá đơn tháng cũ trả trễ thì chọn tháng cũ ở đây.</div>
+    </div>
     ${r.note ? `<div class="notice" style="margin-bottom:10px">${esc(r.note)}</div>` : ''}
     <div class="list" id="review">${r.rows.map((x, i) => `
       <div class="rv ${x.keep ? '' : 'off'}">
@@ -1014,7 +1036,7 @@ function renderReview(r) {
             <option value="">Ghi là khoản phát sinh mới</option>
             ${recs.map(t => `<option value="${t.id}" ${t.id === x.recId ? 'selected' : ''}>Đây là tiền ${esc(t.name)} của tháng</option>`).join('')}
           </select>` : ''}
-          ${x.noDate ? `<div class="hint full" style="color:var(--neg);margin:0">Không thấy ngày trong ảnh, đang để tạm ${esc(fmtDate(x.date))}. Kiểm tra lại ngày trả.</div>` : ''}
+          ${x.noDate ? `<div class="hint full" style="color:var(--neg);margin:0">Không thấy ngày trong ảnh, đang để tạm hôm nay. Kiểm tra lại ngày trả.</div>` : ''}
         </div>
       </div>`).join('')}
     </div>
@@ -1026,6 +1048,7 @@ function renderReview(r) {
 function wireReview(v) {
   const r = UI.result;
   $$('[data-k]', v).forEach(c => c.onchange = () => { r.rows[c.dataset.k].keep = c.checked; render(); });
+  $('#rvMonth').onchange = e => { if (/^\d{4}-\d{2}$/.test(e.target.value)) r.month = e.target.value; };
   $$('[data-f]', v).forEach(inp => inp.onchange = () => {
     const row = r.rows[inp.dataset.i];
     if (inp.dataset.f === 'amount') { const a = parseMoney(inp.value); row.amount = isNaN(a) ? 0 : a; inp.value = num(row.amount); }
@@ -1036,10 +1059,8 @@ function wireReview(v) {
     if (!rows.length) { toast('Chưa chọn khoản nào'); return; }
     const bad = rows.find(x => !x.amount || !x.payerId);
     if (bad) { toast('Còn khoản thiếu số tiền hoặc người trả'); return; }
-    const months = new Set();
+    const month = r.month || UI.month;
     for (const x of rows) {
-      const month = (x.date || defaultDate(UI.month)).slice(0, 7);
-      months.add(month);
       const tpl = x.recId && S.recurring.find(t => t.id === x.recId && activeIn(t, month));
       if (tpl) {
         const o = (monthData(month).rec[tpl.id] ||= {});
@@ -1050,8 +1071,8 @@ function wireReview(v) {
     }
     save();
     UI.result = null; UI.images = []; UI.aiText = ''; UI.error = '';
-    toast(`Đã lưu ${rows.length} khoản`);
-    if (months.size === 1) UI.month = [...months][0];
+    toast(`Đã lưu ${rows.length} khoản vào ${monthLabel(month).toLowerCase()}`);
+    UI.month = month;
     go('expenses');
   };
   $('#clearRv').onclick = () => { UI.result = null; UI.error = ''; render(); };
@@ -1209,7 +1230,7 @@ function editMember(id) {
         if (!name) { toast('Nhập tên'); return false; }
         if (S.members.some(m => !m.to && m !== x && fold(m.name) === fold(name))) { toast('Tên này đã có'); return false; }
         if (x) Object.assign(x, { name, color });
-        else S.members.push({ id:uid(), name, color, from:S.members.length ? UI.month : '', to:null });
+        else S.members.push({ id:uid(), name, color, from:'', to:null });
         save(); render(); toast(x ? 'Đã lưu' : 'Đã thêm ' + name);
       } },
     ],
@@ -1248,14 +1269,43 @@ $('#importIn').addEventListener('change', async e => {
     if (!confirm('Thay toàn bộ dữ liệu hiện tại bằng file này?')) return;
     const key = S.settings.apiKey;
     localStorage.setItem(KEY, JSON.stringify(d));
-    S = load(); if (!S.settings.apiKey) S.settings.apiKey = key; save();
+    S = load(); delete S.askMove; if (!S.settings.apiKey) S.settings.apiKey = key; save();
     render(); toast('Đã nhập dữ liệu');
   } catch { toast('File không đúng định dạng sao lưu'); }
 });
 
+function askMoveOld() {
+  delete S.askMove; save();   // chỉ hỏi đúng một lần, kể cả khi đóng hộp thoại mà không chọn
+  const nE = S.expenses.length, nR = S.recurring.filter(t => !t.to).length;
+  openSheet('Chuyển dữ liệu đã nhập sang một tháng', `
+    <p style="margin-top:0">Bản mới có ô <b>Tính vào tháng</b>, tách khỏi ngày trả. Bạn đang có ${nE} khoản phát sinh${nR ? ` và ${nR} khoản định kỳ` : ''}. Chuyển tất cả để tính cho tháng:</p>
+    <label class="f"><span>Tháng</span><input class="inp" type="month" name="month" value="2026-10"></label>
+    <p class="muted small">Ngày trả của từng khoản giữ nguyên. Khoản định kỳ sẽ bắt đầu tính từ tháng này, các chỉnh sửa riêng bạn đã làm cho tháng sau được chuyển về tháng này.</p>`,
+    [
+      { label:'Để nguyên' },
+      { label:'Chuyển', cls:'primary', run:f => {
+        const target = f.month.value;
+        if (!/^\d{4}-\d{2}$/.test(target)) { toast('Chọn tháng'); return false; }
+        moveAllTo(target); save();
+        UI.month = target; render(); toast('Đã chuyển sang ' + monthLabel(target).toLowerCase());
+      } },
+    ]);
+}
+function moveAllTo(target) {
+  for (const e of S.expenses) e.month = target;
+  for (const t of S.recurring) if (!t.to && t.from && t.from > target) t.from = target;
+  const dst = monthData(target);
+  for (const k of Object.keys(S.months).sort()) {
+    if (k === target) continue;
+    const rec = S.months[k].rec || {};
+    for (const id of Object.keys(rec)) if (!dst.rec[id]) { dst.rec[id] = rec[id]; delete rec[id]; }
+  }
+}
+
 applyTheme();
 matchMedia('(prefers-color-scheme: dark)').addEventListener('change', applyTheme);
 render();
+if (S.askMove) askMoveOld();
 </script>
 </body>
 </html>
