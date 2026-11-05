@@ -55,7 +55,13 @@ button,input,select,textarea{font:inherit;color:inherit}
 .logo{position:relative;display:inline-flex}
 .syncdot{position:absolute;right:-3px;bottom:-3px;width:12px;height:12px;border-radius:999px;border:2.5px solid var(--bg)}
 .month{display:flex;align-items:center;gap:4px;background:var(--surface);border-radius:999px;padding:4px;box-shadow:var(--shadow)}
-.month b{font-weight:700;font-size:14px;min-width:104px;text-align:center}
+.month b{font-weight:700;font-size:14px;min-width:104px;text-align:center;white-space:nowrap}
+.brand{white-space:nowrap;min-width:0}
+@media (max-width:390px){
+  .brand{font-size:16px;gap:7px}
+  .month b{min-width:0;font-size:13px;padding:0 2px}
+  .iconbtn{width:30px;height:30px}
+}
 .iconbtn{width:34px;height:34px;border-radius:999px;border:0;background:var(--surface-2);display:grid;place-items:center;cursor:pointer}
 .iconbtn svg{width:17px;height:17px}
 
@@ -145,7 +151,7 @@ h2:first-child{margin-top:4px}
 .cgroup{display:flex;justify-content:space-between;gap:8px;padding:12px 14px 4px;font-size:13px;font-weight:700;color:var(--muted)}
 .crow{display:flex;align-items:center;gap:10px;padding:8px 14px;width:100%;background:none;border:0;text-align:left;cursor:pointer;color:inherit;position:relative}
 .crow + .crow::before{content:"";position:absolute;top:0;left:14px;right:14px;height:1px;background:var(--line)}
-.dhead{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:26px 0 10px}
+.dhead{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px 10px;margin:26px 0 10px}
 .dhead h2{margin:0}
 .seg.sm{padding:3px}
 .seg.sm{flex:none}
@@ -586,12 +592,18 @@ function renderSummary(v) {
 }
 function detailList(m) {
   const all = activeMembers(m).length;
-  const by = S.settings.detailSort || 'date';
-  const az = (a, b) => a.localeCompare(b, 'vi', { sensitivity:'base', numeric:true });
-  const recs = monthRec(m).filter(r => r.on && r.amount > 0)
-    .sort((a, b) => by === 'name' ? az(a.tpl.name, b.tpl.name) : ((a.day || 99) - (b.day || 99)) || az(a.tpl.name, b.tpl.name));
-  const exps = S.expenses.filter(e => e.month === m && e.amount > 0)
-    .sort((a, b) => by === 'name' ? az(a.desc || '', b.desc || '') : (a.date || '').localeCompare(b.date || '') || az(a.desc || '', b.desc || ''));
+  let by = S.settings.detailSort || 'date';
+  if (by === 'name') by = 'payer';   // "Theo tên" cũ: người dùng hiểu là tên người
+  const az = (a, b) => String(a || '').localeCompare(String(b || ''), 'vi', { sensitivity:'base', numeric:true });
+  const pn = id => (memberById(id) || {}).name || '';
+  const recs = monthRec(m).filter(r => r.on && r.amount > 0).sort((a, b) =>
+    by === 'item' ? az(a.tpl.name, b.tpl.name)
+    : by === 'payer' ? az(pn(a.payerId), pn(b.payerId)) || ((a.day || 99) - (b.day || 99)) || az(a.tpl.name, b.tpl.name)
+    : ((a.day || 99) - (b.day || 99)) || az(a.tpl.name, b.tpl.name));
+  const exps = S.expenses.filter(e => e.month === m && e.amount > 0).sort((a, b) =>
+    by === 'item' ? az(a.desc, b.desc)
+    : by === 'payer' ? az(pn(a.payerId), pn(b.payerId)) || az(a.date, b.date) || az(a.desc, b.desc)
+    : az(a.date, b.date) || az(a.desc, b.desc));
   if (!recs.length && !exps.length) return '';
   const split = parts => parts && parts.length && parts.length !== all ? `, chia ${parts.map(nameOf).join(', ')}` : '';
   const row = (attr, name, amount, payerId, sub) => `
@@ -602,7 +614,7 @@ function detailList(m) {
   const sumR = recs.reduce((a, r) => a + r.amount, 0), sumE = exps.reduce((a, e) => a + e.amount, 0);
   return `
     <div class="dhead"><h2>Chi tiết khoản chi</h2>
-      <div class="seg sm" role="group" aria-label="Sắp xếp">${[['name', 'Theo tên'], ['date', 'Theo ngày']].map(([k, l]) => `<button type="button" data-dsort="${k}" aria-pressed="${by === k}">${l}</button>`).join('')}</div></div>
+      <div class="seg sm" role="group" aria-label="Xếp theo">${[['payer', 'Người'], ['date', 'Ngày'], ['item', 'Tên khoản']].map(([k, l]) => `<button type="button" data-dsort="${k}" aria-pressed="${by === k}">${l}</button>`).join('')}</div></div>
     <div class="clist">
       ${recs.length ? `<div class="cgroup"><span>Định kỳ</span><span>${vnd(sumR)}</span></div>
         ${recs.map(r => row(`data-rec="${r.tpl.id}"`, r.tpl.name, r.amount, r.payerId, (r.day ? `, ngày ${Math.min(r.day, lastDay(m))}` : '') + split(r.parts))).join('')}` : ''}
