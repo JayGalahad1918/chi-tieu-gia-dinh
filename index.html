@@ -1,11 +1,10 @@
 <!doctype html>
-<html lang="vi">
+<html lang="vi" data-theme="light">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Chi tiêu nhà</title>
-<meta name="theme-color" content="#EEF2EF" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#0F1A17" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#F4F6FA">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="icon.svg">
@@ -14,17 +13,25 @@
 <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 :root{
-  --bg:#EEF2EF; --surface:#FFFFFF; --surface-2:#F5F8F6; --ink:#14302A; --muted:#5B6B66;
-  --line:#D6DFDA; --accent:#1F6F8B; --accent-ink:#FFFFFF; --pos:#2F7D4E; --neg:#B5472F;
-  --focus:#1F6F8B; --shadow:0 1px 0 rgba(20,48,42,.06);
-  --r-lg:18px; --r-md:12px; --r-sm:8px;
+  --bg:#F4F6FA; --surface:#FFFFFF; --surface-2:#EEF1F7; --ink:#1F2937; --muted:#6B7280;
+  --line:#E5E8EF; --accent:#4C6FFF; --accent-soft:#E9EDFF; --accent-ink:#FFFFFF;
+  --pos:#0F9A63; --pos-soft:#E2F6EC; --neg:#E5484D; --neg-soft:#FDECEC;
+  --focus:#4C6FFF; --shadow:0 2px 12px rgba(31,41,55,.06);
+  --r-lg:24px; --r-md:18px; --r-sm:12px;
   color-scheme:light;
 }
+:root[data-theme="dark"]{
+  --bg:#14171F; --surface:#1C2029; --surface-2:#262B36; --ink:#ECEFF4; --muted:#9AA3B2;
+  --line:#2D3341; --accent:#8096FF; --accent-soft:#252C4A; --accent-ink:#0E1430;
+  --pos:#4CD39A; --pos-soft:#18332A; --neg:#FF7E82; --neg-soft:#3A2226;
+  --focus:#8096FF; --shadow:none; color-scheme:dark;
+}
 @media (prefers-color-scheme: dark){
-  :root{
-    --bg:#0F1A17; --surface:#172521; --surface-2:#1C2D28; --ink:#E6EEEA; --muted:#93A49E;
-    --line:#2A3A35; --accent:#5BB4D1; --accent-ink:#06222C; --pos:#6CC08F; --neg:#E58A72;
-    --focus:#5BB4D1; --shadow:none; color-scheme:dark;
+  :root[data-theme="auto"]{
+    --bg:#14171F; --surface:#1C2029; --surface-2:#262B36; --ink:#ECEFF4; --muted:#9AA3B2;
+    --line:#2D3341; --accent:#8096FF; --accent-soft:#252C4A; --accent-ink:#0E1430;
+    --pos:#4CD39A; --pos-soft:#18332A; --neg:#FF7E82; --neg-soft:#3A2226;
+    --focus:#8096FF; --shadow:none; color-scheme:dark;
   }
 }
 *{box-sizing:border-box}
@@ -34,156 +41,194 @@ body{
   font-family:"Be Vietnam Pro",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
   font-size:15px; line-height:1.5; -webkit-font-smoothing:antialiased;
   font-variant-numeric:tabular-nums;
-  padding-bottom:calc(76px + env(safe-area-inset-bottom));
+  padding-bottom:calc(84px + env(safe-area-inset-bottom));
 }
 button,input,select,textarea{font:inherit;color:inherit}
 :focus-visible{outline:2px solid var(--focus);outline-offset:2px}
 .wrap{max-width:640px;margin:0 auto;padding:0 16px}
 
 /* top bar */
-.top{position:sticky;top:0;z-index:5;background:var(--bg);border-bottom:1px solid var(--line)}
-.top .wrap{display:flex;align-items:center;gap:8px;height:56px}
-.brand{font-weight:800;font-size:17px;letter-spacing:-.01em;margin-right:auto}
-.month{display:flex;align-items:center;gap:2px}
-.month b{font-weight:700;min-width:118px;text-align:center}
-.iconbtn{width:36px;height:36px;border-radius:999px;border:1px solid var(--line);background:var(--surface);display:grid;place-items:center;cursor:pointer}
-.iconbtn svg{width:18px;height:18px}
+.top{position:sticky;top:0;z-index:5;background:var(--bg)}
+.top .wrap{display:flex;align-items:center;gap:8px;height:60px}
+.brand{font-weight:800;font-size:18px;letter-spacing:-.02em;margin-right:auto;display:flex;align-items:center;gap:8px}
+.brand img{width:28px;height:28px;border-radius:9px}
+.month{display:flex;align-items:center;gap:4px;background:var(--surface);border-radius:999px;padding:4px;box-shadow:var(--shadow)}
+.month b{font-weight:700;font-size:14px;min-width:104px;text-align:center}
+.iconbtn{width:34px;height:34px;border-radius:999px;border:0;background:var(--surface-2);display:grid;place-items:center;cursor:pointer}
+.iconbtn svg{width:17px;height:17px}
 
 /* bottom nav */
-.tabs{position:fixed;left:0;right:0;bottom:0;z-index:6;background:var(--surface);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom)}
-.tabs .wrap{display:grid;grid-template-columns:repeat(5,1fr);padding:0 4px}
-.tab{border:0;background:none;padding:8px 2px 10px;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:11.5px;color:var(--muted);cursor:pointer}
+.tabs{position:fixed;left:0;right:0;bottom:0;z-index:6;background:var(--surface);box-shadow:0 -4px 20px rgba(31,41,55,.06);padding-bottom:env(safe-area-inset-bottom)}
+.tabs .wrap{display:grid;grid-template-columns:repeat(5,1fr);padding:6px 4px}
+.tab{border:0;background:none;padding:6px 2px 8px;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:11.5px;color:var(--muted);cursor:pointer;border-radius:16px}
 .tab svg{width:22px;height:22px}
-.tab[aria-current="page"]{color:var(--accent);font-weight:600}
+.tab[aria-current="page"]{color:var(--accent);font-weight:700;background:var(--accent-soft)}
 
-main{padding:16px 0 24px}
-h2{font-size:17px;margin:24px 0 10px;font-weight:700;letter-spacing:-.01em}
+main{padding:8px 0 24px}
+h2{font-size:17px;margin:26px 0 10px;font-weight:700;letter-spacing:-.01em}
 h2:first-child{margin-top:4px}
-.sub{color:var(--muted);font-size:13.5px;margin:-6px 0 12px}
-.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--shadow)}
-.pad{padding:16px}
+.sub{color:var(--muted);font-size:13.5px;margin:-4px 0 12px}
+.panel{background:var(--surface);border-radius:var(--r-lg);box-shadow:var(--shadow)}
+.pad{padding:18px}
 .muted{color:var(--muted)}
 .small{font-size:13px}
 .pos{color:var(--pos)} .neg{color:var(--neg)}
 .row{display:flex;align-items:center;gap:10px}
 .grow{flex:1;min-width:0}
-.dot{width:12px;height:12px;border-radius:999px;flex:none}
+.dot{width:10px;height:10px;border-radius:999px;flex:none}
 .ellipsis{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.right{text-align:right}
+
+/* avatars & icons */
+.av{flex:none;border-radius:999px;display:grid;place-items:center;color:#fff;font-weight:700;width:36px;height:36px;font-size:15px}
+.av.sm{width:22px;height:22px;font-size:11px}
+.av.lg{width:44px;height:44px;font-size:18px}
+.avstack{display:flex}
+.avstack .av{border:2.5px solid var(--accent);margin-left:-8px}
+.avstack .av:first-child{margin-left:0}
+.ico{flex:none;width:44px;height:44px;border-radius:15px;display:grid;place-items:center;font-size:21px;line-height:1}
 
 /* buttons */
-.btn{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:9px 16px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px;justify-content:center}
-.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn{border:0;background:var(--surface);box-shadow:var(--shadow);border-radius:999px;padding:11px 18px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px;justify-content:center}
+.btn.primary{background:var(--accent);color:var(--accent-ink)}
+.btn.soft{background:var(--accent-soft);color:var(--accent);box-shadow:none}
 .btn.danger{color:var(--neg)}
 .btn.block{width:100%}
 .btn:disabled{opacity:.5;cursor:not-allowed}
 .btnrow{display:flex;gap:8px;flex-wrap:wrap}
+.btnrow.two > .btn{flex:1}
 .link{background:none;border:0;color:var(--accent);font-weight:600;cursor:pointer;padding:4px 0}
 
-/* summary hero */
-.hero{padding:20px 18px 18px}
-.hero .total{font-size:38px;font-weight:800;letter-spacing:-.03em;line-height:1.1;margin:2px 0 4px}
-.paidbar{display:flex;height:14px;border-radius:999px;overflow:hidden;background:var(--surface-2);margin:16px 0 8px}
-.paidbar span{height:100%}
-.legend{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:13px;color:var(--muted)}
+/* summary */
+.hero{background:var(--accent);color:#fff;border-radius:28px;padding:20px 20px 18px;position:relative;overflow:hidden}
+.hero::after{content:"";position:absolute;right:-60px;top:-60px;width:200px;height:200px;border-radius:999px;background:rgba(255,255,255,.09)}
+.hero .lbl{opacity:.85;font-size:14px}
+.hero .total{font-size:40px;font-weight:800;letter-spacing:-.03em;line-height:1.1;margin:4px 0 14px}
+.hero .foot{display:flex;align-items:center;gap:12px;position:relative;z-index:1}
+.hero .foot .per{font-size:13.5px;opacity:.9;line-height:1.35}
+.hero .foot .per b{display:block;font-size:16px;opacity:1}
+.paidbar{display:flex;height:10px;border-radius:999px;overflow:hidden;background:rgba(255,255,255,.22);margin:16px 0 8px;gap:2px}
+.paidbar span{height:100%;border-radius:999px}
+.legend{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:13px;opacity:.92}
 .legend span{display:inline-flex;align-items:center;gap:6px}
+.legend .dot{box-shadow:0 0 0 2px rgba(255,255,255,.8)}
 
-.mrow{display:grid;grid-template-columns:auto 1fr auto;gap:4px 12px;align-items:center;padding:14px 16px;border-top:1px solid var(--line)}
-.mrow:first-child{border-top:0}
-.mrow .name{font-weight:600}
-.mrow .net{font-weight:700;text-align:right}
-.mrow .detail{grid-column:2 / 4;font-size:13px;color:var(--muted)}
+.list{display:grid;gap:10px}
+.tile{display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--surface);border-radius:var(--r-md);box-shadow:var(--shadow);width:100%;border:0;text-align:left;cursor:pointer;color:inherit}
+.tile .t{font-weight:600}
+.tile .meta{font-size:13px;color:var(--muted);display:flex;align-items:center;gap:6px;margin-top:2px}
+.tile .amt{font-weight:700;white-space:nowrap}
+.tile .t2{font-weight:700;font-size:15px;margin-top:1px}
+.tile .meta > .ellipsis{min-width:0;flex:1}
+.tile.off{opacity:.55}
+.tile.off .amt{text-decoration:line-through}
 
-.transfer{display:flex;align-items:center;gap:10px;padding:14px 16px;border-top:1px solid var(--line)}
-.transfer:first-child{border-top:0}
-.transfer .who{display:flex;align-items:center;gap:6px;font-weight:600}
-.transfer .arrow{color:var(--muted)}
-.transfer .amt{margin-left:auto;font-weight:800;font-size:16px}
+.xfer{display:flex;align-items:center;gap:10px;padding:14px;background:var(--surface);border-radius:var(--r-md);box-shadow:var(--shadow)}
+.xfer .arrow{color:var(--muted);flex:none}
+.xfer .arrow svg{width:18px;height:18px;display:block}
+.xfer .txt{flex:1;min-width:0;font-size:13.5px;color:var(--muted);line-height:1.35}
+.xfer .txt b{display:block;color:var(--ink);font-size:17px;font-weight:800}
 
-/* list items */
-.item{display:flex;align-items:center;gap:12px;padding:12px 16px;border-top:1px solid var(--line);width:100%;background:none;border-left:0;border-right:0;border-bottom:0;text-align:left;cursor:pointer}
-.item:first-child{border-top:0}
-.item .t{font-weight:600}
-.item .meta{font-size:13px;color:var(--muted);display:flex;align-items:center;gap:6px}
-.item .amt{font-weight:700;white-space:nowrap}
-.item.off .t,.item.off .amt{color:var(--muted);text-decoration:line-through}
-.datehead{padding:10px 16px 4px;font-size:13px;color:var(--muted);font-weight:600;border-top:1px solid var(--line)}
-.datehead:first-child{border-top:0}
+.mcard{padding:14px;background:var(--surface);border-radius:var(--r-md);box-shadow:var(--shadow)}
+.mcard .head{display:flex;align-items:center;gap:10px}
+.mcard .name{font-weight:700;flex:1;min-width:0}
+.pill{font-size:13px;font-weight:700;border-radius:999px;padding:4px 10px;white-space:nowrap}
+.pill.pos{background:var(--pos-soft)} .pill.neg{background:var(--neg-soft)} .pill.zero{background:var(--surface-2);color:var(--muted)}
+.bars{margin-top:12px;display:grid;gap:6px;font-size:12.5px;color:var(--muted)}
+.bar{display:grid;grid-template-columns:72px 1fr auto;gap:8px;align-items:center}
+.bar .track{height:8px;border-radius:999px;background:var(--surface-2);overflow:hidden}
+.bar .fill{display:block;height:100%;border-radius:999px}
+.bar b{color:var(--ink);font-weight:600}
 
-.check{appearance:none;width:22px;height:22px;border-radius:7px;border:2px solid var(--line);background:var(--surface);display:grid;place-items:center;cursor:pointer;flex:none;margin:0}
+.datehead{padding:6px 4px 0;font-size:13px;color:var(--muted);font-weight:600}
+
+/* switch */
+.switch{appearance:none;flex:none;width:46px;height:28px;border-radius:999px;background:var(--surface-2);border:0;position:relative;cursor:pointer;margin:0;transition:background .15s}
+.switch::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:999px;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:transform .15s}
+.switch:checked{background:var(--accent)}
+.switch:checked::after{transform:translateX(18px)}
+.check{appearance:none;width:24px;height:24px;border-radius:8px;border:2px solid var(--line);background:var(--surface);display:grid;place-items:center;cursor:pointer;flex:none;margin:0}
 .check:checked{background:var(--accent);border-color:var(--accent)}
 .check:checked::after{content:"";width:6px;height:11px;border:solid var(--accent-ink);border-width:0 2.5px 2.5px 0;transform:translateY(-1px) rotate(45deg)}
 
-.empty{padding:28px 18px;text-align:center;color:var(--muted)}
-.empty .btn{margin-top:12px}
+.empty{padding:28px 18px;text-align:center;color:var(--muted);background:var(--surface);border-radius:var(--r-md);box-shadow:var(--shadow)}
+.empty .big{font-size:34px;line-height:1;margin-bottom:8px}
+.empty b{color:var(--ink)}
+.empty .btn{margin-top:14px}
 
 /* forms */
 label.f{display:block;margin-bottom:14px}
 label.f > span{display:block;font-size:13px;font-weight:600;margin-bottom:6px}
-.inp{width:100%;border:1px solid var(--line);background:var(--surface);border-radius:var(--r-sm);padding:10px 12px;min-height:44px}
+.inp{width:100%;border:1.5px solid var(--line);background:var(--surface);border-radius:var(--r-sm);padding:10px 12px;min-height:46px}
+.inp:focus{border-color:var(--accent);outline:none}
 textarea.inp{min-height:88px;resize:vertical}
 .hint{font-size:12.5px;color:var(--muted);margin-top:4px;min-height:1em}
 .chips{display:flex;flex-wrap:wrap;gap:8px}
-.chip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:999px;padding:6px 12px;background:var(--surface);cursor:pointer;font-size:14px}
-.chip[aria-pressed="true"]{border-color:var(--ink);font-weight:600}
-.chip[aria-pressed="false"]{opacity:.55}
+.chip{display:inline-flex;align-items:center;gap:6px;border:1.5px solid var(--line);border-radius:999px;padding:5px 12px 5px 5px;background:var(--surface);cursor:pointer;font-size:14px}
+.chip[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft);font-weight:600}
+.chip[aria-pressed="false"]{opacity:.5}
 .swatches{display:flex;flex-wrap:wrap;gap:10px}
-.sw{width:34px;height:34px;border-radius:999px;border:3px solid transparent;cursor:pointer;padding:0}
-.sw[aria-pressed="true"]{border-color:var(--ink)}
+.sw{width:36px;height:36px;border-radius:999px;border:3px solid var(--surface);box-shadow:0 0 0 1.5px var(--line);cursor:pointer;padding:0}
+.sw[aria-pressed="true"]{box-shadow:0 0 0 2.5px var(--ink)}
+.seg{display:flex;background:var(--surface-2);border-radius:999px;padding:4px;gap:4px}
+.seg button{flex:1;border:0;background:none;border-radius:999px;padding:8px 6px;font-weight:600;color:var(--muted);cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:var(--shadow)}
 
 /* sheet */
-dialog.sheet{border:0;padding:0;background:var(--surface);color:var(--ink);width:100%;max-width:560px;border-radius:20px 20px 0 0;margin:auto auto 0;max-height:92vh}
-@media (min-width:640px){dialog.sheet{border-radius:20px;margin:auto}}
-dialog.sheet::backdrop{background:rgba(8,20,16,.45)}
-.sheet-h{display:flex;align-items:center;justify-content:space-between;padding:16px 18px 6px}
-.sheet-h h3{margin:0;font-size:17px}
+dialog.sheet{border:0;padding:0;background:var(--surface);color:var(--ink);width:100%;max-width:560px;border-radius:26px 26px 0 0;margin:auto auto 0;max-height:92vh}
+@media (min-width:640px){dialog.sheet{border-radius:26px;margin:auto}}
+dialog.sheet::backdrop{background:rgba(15,20,35,.4)}
+.sheet-h{display:flex;align-items:center;justify-content:space-between;padding:18px 18px 6px}
+.sheet-h h3{margin:0;font-size:18px}
 .sheet-b{padding:8px 18px 18px;overflow:auto}
-.sheet-f{display:flex;gap:8px;padding:12px 18px calc(16px + env(safe-area-inset-bottom));border-top:1px solid var(--line)}
-.sheet-f .btn{flex:1}
+.sheet-f{display:flex;gap:8px;padding:12px 18px calc(16px + env(safe-area-inset-bottom))}
+.sheet-f .btn{flex:1;box-shadow:none;background:var(--surface-2)}
+.sheet-f .btn.primary{background:var(--accent)}
 
 /* AI */
-.drop{border:2px dashed var(--line);border-radius:var(--r-lg);padding:22px 16px;text-align:center;cursor:pointer;background:var(--surface)}
-.drop.drag{border-color:var(--accent)}
+.drop{border:2px dashed var(--line);border-radius:var(--r-lg);padding:24px 16px;text-align:center;cursor:pointer;background:var(--surface)}
+.drop .big{font-size:30px;line-height:1;margin-bottom:6px}
+.drop.drag{border-color:var(--accent);background:var(--accent-soft)}
 .thumbs{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:10px;margin-top:12px}
-.thumb{position:relative;border-radius:var(--r-md);overflow:hidden;border:1px solid var(--line);background:var(--surface-2)}
+.thumb{position:relative;border-radius:var(--r-sm);overflow:hidden;background:var(--surface);box-shadow:var(--shadow)}
 .thumb img{display:block;width:100%;height:120px;object-fit:cover;object-position:top}
-.thumb small{display:block;padding:4px 6px;font-size:11.5px;color:var(--muted)}
+.thumb small{display:block;padding:4px 8px;font-size:11.5px;color:var(--muted)}
 .thumb button{position:absolute;top:4px;right:4px;width:26px;height:26px;border-radius:999px;border:0;background:rgba(0,0,0,.6);color:#fff;cursor:pointer;line-height:1}
-.est{display:grid;grid-template-columns:1fr auto;gap:2px 12px;font-size:14px}
+.est{display:grid;grid-template-columns:1fr auto;gap:4px 12px;font-size:14px}
 .est .big{font-weight:800}
-.rv{padding:12px 16px;border-top:1px solid var(--line);display:grid;grid-template-columns:auto 1fr;gap:8px 10px;align-items:start}
-.rv:first-child{border-top:0}
+.rv{padding:14px;background:var(--surface);border-radius:var(--r-md);box-shadow:var(--shadow);display:grid;grid-template-columns:auto 1fr;gap:8px 12px;align-items:start}
 .rv .fields{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .rv .fields .full{grid-column:1 / 3}
-.rv .inp{min-height:40px;padding:8px 10px}
+.rv .inp{min-height:42px;padding:8px 10px}
 .rv.off .fields{opacity:.45}
-.notice{border-radius:var(--r-md);padding:12px 14px;background:var(--surface-2);border:1px solid var(--line);font-size:14px}
-.notice.err{border-color:var(--neg);color:var(--neg)}
+.notice{border-radius:var(--r-md);padding:12px 14px;background:var(--accent-soft);font-size:14px}
+.notice.err{background:var(--neg-soft);color:var(--neg)}
 .usage{font-size:13.5px;color:var(--muted);margin-top:10px}
 
 /* tables */
 table.t{width:100%;border-collapse:collapse;font-size:14px}
-table.t th,table.t td{padding:10px 12px;border-top:1px solid var(--line);text-align:right;white-space:nowrap}
+table.t th,table.t td{padding:11px 14px;border-top:1px solid var(--line);text-align:right;white-space:nowrap}
 table.t th:first-child,table.t td:first-child{text-align:left}
 table.t thead th{border-top:0;font-size:12.5px;color:var(--muted);font-weight:600}
-table.t tr.sel td{background:var(--surface-2);font-weight:700}
+table.t tr.sel td{background:var(--accent-soft);font-weight:700}
 .scroll-x{overflow-x:auto}
-.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:1px;background:var(--line);border-radius:var(--r-lg);overflow:hidden;border:1px solid var(--line)}
-.stats > div{background:var(--surface);padding:14px 16px}
-.stats b{display:block;font-size:20px;font-weight:800;letter-spacing:-.01em}
+.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.stats > div{background:var(--surface);padding:14px 16px;border-radius:var(--r-md);box-shadow:var(--shadow)}
+.stats > div:first-child{background:var(--accent);color:#fff}
+.stats > div:first-child span{color:rgba(255,255,255,.85)}
+.stats b{display:block;font-size:21px;font-weight:800;letter-spacing:-.01em}
 .stats span{font-size:12.5px;color:var(--muted)}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 
-#toast{position:fixed;left:50%;bottom:calc(88px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:999px;font-size:14px;font-weight:600;opacity:0;pointer-events:none;transition:opacity .2s;z-index:20;max-width:90vw;text-align:center}
+#toast{position:fixed;left:50%;bottom:calc(96px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 18px;border-radius:999px;font-size:14px;font-weight:600;opacity:0;pointer-events:none;transition:opacity .2s;z-index:20;max-width:90vw;text-align:center}
 #toast.show{opacity:1}
-@media (prefers-reduced-motion: reduce){#toast{transition:none}}
+@media (prefers-reduced-motion: reduce){#toast,.switch,.switch::after{transition:none}}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
 </style>
 </head>
 <body>
 <header class="top">
   <div class="wrap">
-    <div class="brand">Chi tiêu nhà</div>
+    <div class="brand"><img src="icon.svg" alt="">Chi tiêu nhà</div>
     <div class="month" id="monthBox">
       <button class="iconbtn" id="mPrev" aria-label="Tháng trước"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg></button>
       <b id="mLabel"></b>
@@ -279,7 +324,7 @@ function blank() {
     recurring: [],    // {id,name,amount,payerId,from,to}
     months: {},       // 'YYYY-MM': {rec:{tplId:{on,amount,payerId}}}
     expenses: [],     // {id,month,date,desc,amount,payerId,participants,source}
-    settings: { apiKey:'', model:MODELS[0].id, rate:26000, meId:'', prices:Object.fromEntries(MODELS.map(m => [m.id, {in:m.in, out:m.out}])) },
+    settings: { apiKey:'', theme:'light', model:MODELS[0].id, rate:26000, meId:'', prices:Object.fromEntries(MODELS.map(m => [m.id, {in:m.in, out:m.out}])) },
     aiLog: [],        // {t,model,inTok,outTok,imgTok,images,items}
   };
 }
@@ -313,7 +358,9 @@ const costUSD = (model, inTok, outTok) => { const p = priceOf(model); return inT
 function monthRec(m) {
   return S.recurring.filter(t => activeIn(t, m)).map(t => {
     const o = (S.months[m] && S.months[m].rec[t.id]) || {};
-    return { tpl:t, on:o.on ?? true, amount:o.amount ?? t.amount, payerId:o.payerId ?? t.payerId };
+    const p = o.parts !== undefined ? o.parts : t.parts;
+    return { tpl:t, on:o.on ?? true, amount:o.amount ?? t.amount, payerId:o.payerId ?? t.payerId,
+      day:o.day !== undefined ? o.day : (t.day ?? null), parts:(!p || p === 'all') ? null : p };
   });
 }
 function earliestMonth() {
@@ -328,6 +375,8 @@ function freezePast(t, untilMonth) {
     const o = (monthData(m).rec[t.id] ||= {});
     if (o.amount === undefined) o.amount = t.amount;
     if (o.payerId === undefined) o.payerId = t.payerId;
+    if (o.day === undefined) o.day = t.day ?? null;
+    if (o.parts === undefined) o.parts = t.parts || 'all';
     m = addMonth(m, 1);
   }
 }
@@ -338,7 +387,7 @@ function freezePast(t, untilMonth) {
 function monthItems(m) {
   const act = activeMembers(m).map(x => x.id);
   const items = [];
-  for (const r of monthRec(m)) if (r.on && r.amount > 0 && r.payerId) items.push({ name:r.tpl.name, amount:r.amount, payerId:r.payerId, parts:act });
+  for (const r of monthRec(m)) if (r.on && r.amount > 0 && r.payerId) items.push({ name:r.tpl.name, amount:r.amount, payerId:r.payerId, parts:r.parts ? r.parts.filter(id => act.includes(id)) : act });
   for (const e of S.expenses) if (e.month === m && e.amount > 0 && e.payerId) items.push({ name:e.desc, amount:e.amount, payerId:e.payerId, parts:(e.participants || act).filter(memberById) });
   return items;
 }
@@ -384,6 +433,39 @@ function toast(msg) {
   clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.remove('show'), 2200);
 }
 const dotEl = mem => `<span class="dot" style="background:${esc(mem ? mem.color : 'var(--line)')}"></span>`;
+const avEl = (mem, cls = '') => `<span class="av ${cls}" style="background:${esc(mem ? mem.color : '#B0B7C3')}" aria-hidden="true">${esc(mem ? ([...mem.name.trim()][0] || '?').toUpperCase() : '?')}</span>`;
+const CATS = [
+  [/giat|ve sinh|lau nha|don dep|xa phong|nuoc rua/, '🧺', 'rgba(124,93,250,.15)'],
+  [/tien nha|thue nha|thue phong|tien phong|tien tro/, '🏠', 'rgba(255,140,50,.17)'],
+  [/dien/, '⚡', 'rgba(245,190,30,.22)'],
+  [/internet|wifi|\bmang\b|fpt|viettel|vnpt|truyen hinh/, '📶', 'rgba(76,111,255,.15)'],
+  [/nuoc/, '💧', 'rgba(40,160,230,.16)'],
+  [/\bgas\b|binh ga/, '🔥', 'rgba(240,80,60,.15)'],
+  [/quan ly|\bphi\b|chung cu/, '🏢', 'rgba(100,116,139,.16)'],
+  [/gui xe|\bxe\b|xang/, '🛵', 'rgba(20,160,140,.16)'],
+  [/sua chua|\bsua\b (may|tu|bon|ong|den|cua)|\bthay\b/, '🔧', 'rgba(100,116,139,.16)'],
+  [/\bcho\b|\ban\b|thit|\brau\b|\bca\b|\bcom\b|trai cay|sieu thi|bach hoa|do an|\bgao\b|trung|\bbun\b|\bpho\b|lau/, '🛒', 'rgba(16,160,100,.16)'],
+];
+function icoEl(name) {
+  const f = ' ' + fold(name) + ' ';
+  const c = CATS.find(([re]) => re.test(f)) || [null, '🛍️', 'rgba(100,116,139,.14)'];
+  return `<span class="ico" style="background:${c[2]}" aria-hidden="true">${c[1]}</span>`;
+}
+function dayLabel(iso) {
+  const t = todayISO();
+  const y = new Date(); y.setDate(y.getDate() - 1);
+  const yi = `${y.getFullYear()}-${pad(y.getMonth() + 1)}-${pad(y.getDate())}`;
+  if (iso === t) return 'Hôm nay';
+  if (iso === yi) return 'Hôm qua';
+  const wd = ['Chủ nhật', 'Thứ hai', 'Thứ ba', 'Thứ tư', 'Thứ năm', 'Thứ sáu', 'Thứ bảy'][new Date(iso + 'T00:00').getDay()];
+  return `${wd}, ${fmtDate(iso)}`;
+}
+function applyTheme() {
+  const th = S.settings.theme || 'light';
+  document.documentElement.dataset.theme = th;
+  const dark = th === 'dark' || (th === 'auto' && matchMedia('(prefers-color-scheme: dark)').matches);
+  $('meta[name="theme-color"]').setAttribute('content', dark ? '#14171F' : '#F4F6FA');
+}
 const nameOf = id => { const m = memberById(id); return m ? m.name + (m.to ? ' (đã xoá)' : '') : 'Chưa chọn'; };
 
 function render() {
@@ -403,41 +485,50 @@ $('#mNext').addEventListener('click', () => { UI.month = addMonth(UI.month, 1); 
 function renderSummary(v) {
   const m = UI.month;
   if (!S.members.length) {
-    v.innerHTML = `<div class="panel empty"><b>Chưa có thành viên</b><div>Thêm người ở chung trước, app sẽ chia đều các khoản chi cho mọi người.</div><button class="btn primary" data-go="settings">Thêm thành viên</button></div>`;
+    v.innerHTML = `<div class="empty"><div class="big">🏠</div><b>Chưa có thành viên</b><div>Thêm những người ở chung, app sẽ chia đều các khoản chi cho mọi người.</div><button class="btn primary" data-go="settings">Thêm thành viên</button></div>`;
     v.querySelector('[data-go]').onclick = () => go('settings');
     return;
   }
   const { total, rows, transfers } = computeMonth(m);
-  const n = activeMembers(m).length || 1;
+  const act = activeMembers(m);
+  const n = act.length || 1;
   const paidRows = rows.filter(r => r.paid > 0);
+  const maxV = Math.max(1, ...rows.map(r => Math.max(r.paid, r.owe)));
   v.innerHTML = `
-    <section class="panel hero">
-      <div class="muted">Tổng chi ${monthLabel(m).toLowerCase()}</div>
+    <section class="hero">
+      <div class="lbl">Tổng chi ${monthLabel(m).toLowerCase()}</div>
       <div class="total">${vnd(total)}</div>
-      <div class="muted small">Chia đều ${n} người, khoảng ${vnd(total / n)} mỗi người</div>
+      <div class="foot">
+        <div class="avstack">${act.map(x => avEl(x)).join('')}</div>
+        <div class="per"><b>${vnd(total / n)}</b>mỗi người, chia đều ${n} người</div>
+      </div>
       ${total ? `<div class="paidbar" role="img" aria-label="Tỷ lệ mỗi người đã chi">${paidRows.map(r => `<span style="width:${(r.paid / total * 100).toFixed(2)}%;background:${esc(r.mem.color)}"></span>`).join('')}</div>
-      <div class="legend">${paidRows.map(r => `<span>${dotEl(r.mem)}${esc(r.mem.name)} chi ${Math.round(r.paid / total * 100)}%</span>`).join('')}</div>` : ''}
+      <div class="legend">${paidRows.map(r => `<span><span class="dot" style="background:${esc(r.mem.color)}"></span>${esc(r.mem.name)} đã chi ${Math.round(r.paid / total * 100)}%</span>`).join('')}</div>` : ''}
     </section>
 
-    <h2>Chuyển khoản để cân bằng</h2>
-    <div class="panel">${transfers.length ? transfers.map(t => `
-      <div class="transfer">
-        <span class="who">${dotEl(t.from)}${esc(t.from.name)}</span><span class="arrow">trả</span>
-        <span class="who">${dotEl(t.to)}${esc(t.to.name)}</span>
-        <span class="amt">${vnd(t.amt)}</span>
-      </div>`).join('') : `<div class="empty">${total ? 'Mọi người đã chi ngang nhau, không ai nợ ai.' : 'Tháng này chưa có khoản chi nào.'}</div>`}
-    </div>
+    <h2>Ai chuyển cho ai</h2>
+    ${transfers.length ? `<div class="list">${transfers.map(t => `
+      <div class="xfer">
+        ${avEl(t.from, 'lg')}
+        <span class="arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+        ${avEl(t.to, 'lg')}
+        <div class="txt"><b>${vnd(t.amt)}</b>${esc(t.from.name)} chuyển cho ${esc(t.to.name)}</div>
+      </div>`).join('')}</div>`
+    : `<div class="empty"><div class="big">${total ? '🤝' : '🌱'}</div>${total ? 'Mọi người đã chi ngang nhau, không ai nợ ai.' : 'Tháng này chưa có khoản chi nào.'}</div>`}
 
     <h2>Từng người</h2>
-    <div class="panel">${rows.map(r => `
-      <div class="mrow">
-        ${dotEl(r.mem)}<span class="name">${esc(r.mem.name)}</span>
-        <span class="net ${r.net > 0 ? 'pos' : r.net < 0 ? 'neg' : ''}">${r.net > 0 ? 'Nhận lại ' + vnd(r.net) : r.net < 0 ? 'Cần trả ' + vnd(-r.net) : 'Đã đủ'}</span>
-        <span class="detail">Đã chi ${vnd(r.paid)}, phần phải chịu ${vnd(r.owe)}</span>
+    <div class="list">${rows.map(r => `
+      <div class="mcard">
+        <div class="head">${avEl(r.mem)}<span class="name ellipsis">${esc(r.mem.name)}</span>
+          <span class="pill ${r.net > 0 ? 'pos' : r.net < 0 ? 'neg' : 'zero'}">${r.net > 0 ? 'Nhận lại ' + vnd(r.net) : r.net < 0 ? 'Cần trả ' + vnd(-r.net) : 'Đã đủ'}</span></div>
+        <div class="bars">
+          <div class="bar"><span>Đã chi</span><span class="track"><span class="fill" style="width:${(r.paid / maxV * 100).toFixed(1)}%;background:${esc(r.mem.color)}"></span></span><b>${vnd(r.paid)}</b></div>
+          <div class="bar"><span>Phần chịu</span><span class="track"><span class="fill" style="width:${(r.owe / maxV * 100).toFixed(1)}%;background:var(--muted);opacity:.45"></span></span><b>${vnd(r.owe)}</b></div>
+        </div>
       </div>`).join('')}
     </div>
 
-    <div class="btnrow" style="margin-top:16px">
+    <div class="btnrow two" style="margin-top:18px">
       <button class="btn primary" id="copySum" ${total ? '' : 'disabled'}>Sao chép tổng kết</button>
       <button class="btn" data-go="expenses">Xem khoản chi</button>
     </div>`;
@@ -467,46 +558,42 @@ function renderExpenses(v) {
   const exps = S.expenses.filter(e => e.month === m).sort((a, b) => (b.date || '').localeCompare(a.date || '') || 0);
   const recOn = recs.filter(r => r.on).reduce((s, r) => s + r.amount, 0);
   const expSum = exps.reduce((s, e) => s + e.amount, 0);
-
   const groups = {};
   for (const e of exps) (groups[e.date || ''] ||= []).push(e);
 
   v.innerHTML = `
     <h2>Định kỳ</h2>
-    <p class="sub">Bỏ tick khoản nào tháng này không phát sinh. Bấm vào khoản để sửa số tiền hoặc người chi riêng cho tháng này.</p>
-    <div class="panel">
-      ${recs.length ? recs.map(r => `
-        <div class="item ${r.on ? '' : 'off'}" data-rec="${r.tpl.id}">
-          <input type="checkbox" class="check" data-toggle="${r.tpl.id}" ${r.on ? 'checked' : ''} aria-label="Tính ${esc(r.tpl.name)} vào tháng này">
-          <div class="grow">
-            <div class="t ellipsis">${esc(r.tpl.name)}</div>
-            <div class="meta">${dotEl(memberById(r.payerId))}${esc(nameOf(r.payerId))} trả</div>
-          </div>
-          <div class="amt">${vnd(r.amount)}</div>
-        </div>`).join('') : `<div class="empty">Chưa có khoản định kỳ. Thêm tiền nhà, phí quản lý, internet… một lần, các tháng sau tự có.</div>`}
-    </div>
-    <div class="btnrow" style="margin-top:10px"><button class="btn" id="manageRec">${recs.length ? 'Sửa danh sách định kỳ' : 'Thêm khoản định kỳ'}</button>
-      ${recs.length ? `<span class="muted small" style="align-self:center">Tổng đang tính: ${vnd(recOn)}</span>` : ''}</div>
+    <p class="sub">${recs.length ? `Gạt tắt khoản nào tháng này không có. Bấm vào khoản để sửa. Đang tính ${vnd(recOn)}.` : 'Thêm tiền nhà, phí quản lý, internet… một lần, các tháng sau tự có.'}</p>
+    ${recs.length ? `<div class="list">${recs.map(r => `
+      <div class="tile ${r.on ? '' : 'off'}" data-rec="${r.tpl.id}" role="button" tabindex="0">
+        ${icoEl(r.tpl.name)}
+        <div class="grow">
+          <div class="t ellipsis">${esc(r.tpl.name)}</div>
+          <div class="t2">${vnd(r.amount)}</div>
+          <div class="meta">${avEl(memberById(r.payerId), 'sm')}<span class="ellipsis">${esc(nameOf(r.payerId))} trả${r.day ? ` ngày ${Math.min(r.day, lastDay(m))}` : ''}${r.parts ? `, chia ${esc(r.parts.map(nameOf).join(', '))}` : ''}</span></div>
+        </div>
+        <input type="checkbox" class="switch" data-toggle="${r.tpl.id}" ${r.on ? 'checked' : ''} aria-label="Tính ${esc(r.tpl.name)} vào tháng này">
+      </div>`).join('')}</div>` : ''}
+    <button class="btn soft" id="manageRec" style="margin-top:10px">Thêm khoản định kỳ</button>
 
     <h2>Phát sinh</h2>
-    <div class="btnrow" style="margin-bottom:12px">
+    <div class="btnrow two" style="margin-bottom:12px">
       <button class="btn primary" id="addExp">Thêm khoản chi</button>
       <button class="btn" id="toAI">Đọc từ ảnh chụp</button>
     </div>
-    <div class="panel">
-      ${exps.length ? Object.keys(groups).sort().reverse().map(d => `
-        <div class="datehead">${d ? 'Ngày ' + fmtDate(d) : 'Không rõ ngày'}</div>
-        ${groups[d].map(e => `
-          <button class="item" data-exp="${e.id}">
-            ${dotEl(memberById(e.payerId))}
-            <div class="grow">
-              <div class="t ellipsis">${esc(e.desc || 'Khoản chi')}</div>
-              <div class="meta">${esc(nameOf(e.payerId))} trả${e.participants && e.participants.length !== activeMembers(m).length ? `, chia ${e.participants.length} người` : ''}${e.source === 'ai' ? ', đọc từ ảnh' : ''}</div>
-            </div>
-            <div class="amt">${vnd(e.amount)}</div>
-          </button>`).join('')}`).join('') : `<div class="empty">Chưa có khoản phát sinh trong ${monthLabel(m).toLowerCase()}.</div>`}
-    </div>
-    ${exps.length ? `<p class="muted small" style="margin-top:8px">Tổng phát sinh: ${vnd(expSum)}</p>` : ''}`;
+    ${exps.length ? `<div class="list">${Object.keys(groups).sort().reverse().map(d => `
+      <div class="datehead">${d ? dayLabel(d) : 'Không rõ ngày'}</div>
+      ${groups[d].map(e => `
+        <button class="tile" data-exp="${e.id}">
+          ${icoEl(e.desc)}
+          <div class="grow">
+            <div class="t ellipsis">${esc(e.desc || 'Khoản chi')}</div>
+            <div class="meta">${avEl(memberById(e.payerId), 'sm')}${esc(nameOf(e.payerId))} trả${e.participants && e.participants.length !== activeMembers(m).length ? `, chia ${e.participants.length} người` : ''}${e.source === 'ai' ? ', từ ảnh' : ''}</div>
+          </div>
+          <div class="amt">${vnd(e.amount)}</div>
+        </button>`).join('')}`).join('')}</div>
+      <p class="muted small" style="margin:10px 4px 0">Tổng phát sinh ${vnd(expSum)}</p>`
+    : `<div class="empty"><div class="big">🛒</div>Chưa có khoản phát sinh trong ${monthLabel(m).toLowerCase()}.</div>`}`;
 
   $$('[data-toggle]', v).forEach(c => {
     c.addEventListener('click', ev => ev.stopPropagation());
@@ -515,9 +602,12 @@ function renderExpenses(v) {
       o.on = c.checked; save(); render();
     });
   });
-  $$('[data-rec]', v).forEach(el => el.addEventListener('click', () => editRecMonth(el.dataset.rec)));
+  $$('[data-rec]', v).forEach(el => {
+    el.addEventListener('click', () => editRec(el.dataset.rec));
+    el.addEventListener('keydown', e => { if (e.target === el && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); editRec(el.dataset.rec); } });
+  });
   $$('[data-exp]', v).forEach(el => el.addEventListener('click', () => editExpense(el.dataset.exp)));
-  $('#manageRec').onclick = manageRecurring;
+  $('#manageRec').onclick = () => editRec(null);
   $('#addExp').onclick = () => editExpense(null);
   $('#toAI').onclick = () => go('ai');
 }
@@ -573,10 +663,10 @@ function editExpense(id) {
     ${moneyField('amount', e ? e.amount : 0, 'Số tiền')}
     <div class="grid2">
       <label class="f"><span>Ai trả</span>${payerSelect('payer', payer, pool)}</label>
-      <label class="f"><span>Ngày</span><input class="inp" type="date" name="date" value="${esc(e ? e.date : defaultDate(m))}"></label>
+      <label class="f"><span>Ngày trả</span><input class="inp" type="date" name="date" value="${esc(e ? e.date : defaultDate(m))}"></label>
     </div>
     <div class="f"><span style="display:block;font-size:13px;font-weight:600;margin-bottom:6px">Chia đều cho</span>
-      <div class="chips">${pool.map(x => `<button type="button" class="chip" data-part="${x.id}" aria-pressed="${parts.has(x.id)}">${dotEl(x)}${esc(x.name)}</button>`).join('')}</div>
+      <div class="chips">${pool.map(x => `<button type="button" class="chip" data-part="${x.id}" aria-pressed="${parts.has(x.id)}">${avEl(x, 'sm')}${esc(x.name)}</button>`).join('')}</div>
     </div>`,
     [
       ...(e ? [{ label:'Xoá', cls:'danger', run:() => { if (!confirm('Xoá khoản chi này?')) return false; S.expenses = S.expenses.filter(x => x.id !== e.id); save(); render(); toast('Đã xoá khoản chi'); } }] : []),
@@ -602,67 +692,80 @@ function editExpense(id) {
     });
 }
 
-function editRecMonth(tplId) {
-  const m = UI.month;
-  const r = monthRec(m).find(x => x.tpl.id === tplId);
-  if (!r) return;
-  openSheet(`${r.tpl.name}, ${monthLabel(m).toLowerCase()}`, `
-    ${moneyField('amount', r.amount, 'Số tiền tháng này')}
-    <label class="f"><span>Ai trả tháng này</span>${payerSelect('payer', r.payerId, activeMembers(m))}</label>
-    <p class="muted small">Chỉ đổi cho ${monthLabel(m).toLowerCase()}. Muốn đổi mặc định cho mọi tháng, vào "Sửa danh sách định kỳ".</p>`,
-    [
-      { label:'Về mặc định', run:() => { const o = monthData(m).rec[tplId]; if (o) { delete o.amount; delete o.payerId; } save(); render(); } },
-      { label:'Lưu', cls:'primary', run:f => {
-        const amount = parseMoney(f.amount.value);
-        if (isNaN(amount)) { toast('Số tiền chưa đúng'); return false; }
-        const o = (monthData(m).rec[tplId] ||= {});
-        o.amount = amount; o.payerId = f.payer.value || r.payerId;
-        save(); render(); toast('Đã lưu cho ' + monthLabel(m).toLowerCase());
-      } },
-    ]);
-}
-
-function manageRecurring() {
+/** Thêm hoặc sửa khoản định kỳ: một hộp thoại cho mọi thứ */
+function editRec(id) {
   if (needMembers()) return;
-  const list = S.recurring.filter(t => !t.to || UI.month < t.to);
-  openSheet('Khoản định kỳ', `
-    <p class="muted small" style="margin-top:0">Các khoản này tự có mỗi tháng và chia đều cho mọi người.</p>
-    <div class="panel" style="margin-bottom:12px">${list.length ? list.map(t => `
-      <button type="button" class="item" data-tpl="${t.id}">${dotEl(memberById(t.payerId))}
-        <div class="grow"><div class="t ellipsis">${esc(t.name)}</div><div class="meta">${esc(nameOf(t.payerId))} trả</div></div>
-        <div class="amt">${vnd(t.amount)}</div></button>`).join('') : '<div class="empty">Chưa có khoản nào</div>'}
-    </div>
-    <button type="button" class="btn block" id="newTpl">Thêm khoản định kỳ</button>`,
-    [], d => {
-      $$('[data-tpl]', d).forEach(b => b.onclick = () => { d.close(); editTemplate(b.dataset.tpl); });
-      $('#newTpl', d).onclick = () => { d.close(); editTemplate(null); };
-    });
-}
-function editTemplate(id) {
+  const m = UI.month;
   const t = id ? S.recurring.find(x => x.id === id) : null;
-  const members = currentMembers();
+  const r = t ? monthRec(m).find(x => x.tpl.id === id) : null;
+  const pool = activeMembers(m);
+  const sel = new Set(r && r.parts ? r.parts.filter(pid => pool.some(x => x.id === pid)) : pool.map(x => x.id));
+  const payer = r ? r.payerId : (S.settings.meId && pool.some(x => x.id === S.settings.meId) ? S.settings.meId : '');
+  const ml = monthLabel(m).toLowerCase();
   openSheet(t ? 'Sửa khoản định kỳ' : 'Thêm khoản định kỳ', `
     <label class="f"><span>Tên khoản</span><input class="inp" name="name" placeholder="vd: Tiền nhà, Internet, Phí quản lý" value="${esc(t ? t.name : '')}" autocomplete="off"></label>
-    ${moneyField('amount', t ? t.amount : 0, 'Số tiền mỗi tháng')}
-    <label class="f"><span>Ai thường trả</span>${payerSelect('payer', t ? t.payerId : (S.settings.meId || ''), members)}</label>
-    ${t ? `<p class="muted small">Đổi ở đây áp dụng từ ${monthLabel(UI.month).toLowerCase()} trở đi, các tháng trước giữ nguyên.</p>` : ''}`,
+    ${moneyField('amount', r ? r.amount : 0, 'Số tiền mỗi tháng')}
+    <div class="grid2">
+      <label class="f"><span>Ai trả</span>${payerSelect('payer', payer, pool)}</label>
+      <label class="f"><span>Trả vào ngày</span><input class="inp" name="day" type="number" inputmode="numeric" min="1" max="31" placeholder="vd: 5" value="${r && r.day ? r.day : ''}"></label>
+    </div>
+    <div class="f"><span style="display:block;font-size:13px;font-weight:600;margin-bottom:6px">Chia đều cho</span>
+      <div class="chips">${pool.map(x => `<button type="button" class="chip" data-part="${x.id}" aria-pressed="${sel.has(x.id)}">${avEl(x, 'sm')}${esc(x.name)}</button>`).join('')}</div>
+      <div class="hint" id="partHint"></div>
+    </div>
+    ${t ? `<div class="f"><span style="display:block;font-size:13px;font-weight:600;margin-bottom:6px">Áp dụng thay đổi</span>
+      <div class="seg" role="group" aria-label="Áp dụng thay đổi">
+        <button type="button" data-scope="forward" aria-pressed="true">Từ ${ml} trở đi</button>
+        <button type="button" data-scope="month" aria-pressed="false">Chỉ ${ml}</button>
+      </div>
+      <div class="hint">Các tháng trước giữ nguyên.</div></div>` : ''}`,
     [
       ...(t ? [{ label:'Xoá', cls:'danger', run:() => {
-        if (!confirm(`Bỏ "${t.name}" từ ${monthLabel(UI.month).toLowerCase()} trở đi? Các tháng trước vẫn giữ.`)) return false;
-        freezePast(t, UI.month);
-        if (!t.from || t.from < UI.month) t.to = UI.month; else S.recurring = S.recurring.filter(x => x.id !== t.id);
+        if (!confirm(`Bỏ "${t.name}" từ ${ml} trở đi? Các tháng trước vẫn giữ.`)) return false;
+        freezePast(t, m);
+        if (!t.from || t.from < m) t.to = m; else S.recurring = S.recurring.filter(x => x.id !== t.id);
         save(); render(); toast('Đã bỏ khoản định kỳ');
       } }] : []),
-      { label:t ? 'Lưu thay đổi' : 'Thêm', cls:'primary', run:f => {
+      { label:t ? 'Lưu thay đổi' : 'Thêm khoản định kỳ', cls:'primary', run:f => {
         const name = f.name.value.trim(), amount = parseMoney(f.amount.value);
+        const dayRaw = f.day.value.trim(), day = dayRaw ? Math.round(Number(dayRaw)) : null;
+        const chosen = $$('[data-part]', f).filter(b => b.getAttribute('aria-pressed') === 'true').map(b => b.dataset.part);
         if (!name) { toast('Nhập tên khoản'); return false; }
         if (!amount || isNaN(amount)) { toast('Nhập số tiền'); return false; }
         if (!f.payer.value) { toast('Chọn người trả'); return false; }
-        if (t) { freezePast(t, UI.month); Object.assign(t, { name, amount, payerId:f.payer.value }); }
-        else S.recurring.push({ id:uid(), name, amount, payerId:f.payer.value, from:UI.month, to:null });
+        if (day !== null && !(day >= 1 && day <= 31)) { toast('Ngày trả từ 1 đến 31'); return false; }
+        if (!chosen.length) { toast('Chọn ít nhất một người để chia'); return false; }
+        const parts = chosen.length === pool.length ? null : chosen;
+        if (!t) {
+          S.recurring.push({ id:uid(), name, amount, payerId:f.payer.value, day, parts, from:m, to:null });
+        } else {
+          t.name = name;
+          const scope = ($('[data-scope][aria-pressed="true"]', f) || {}).dataset?.scope || 'forward';
+          if (scope === 'month') {
+            const o = (monthData(m).rec[t.id] ||= {});
+            Object.assign(o, { amount, payerId:f.payer.value, day, parts:parts || 'all' });
+          } else {
+            freezePast(t, m);
+            Object.assign(t, { amount, payerId:f.payer.value, day, parts });
+            for (const [mk, md] of Object.entries(S.months)) {
+              const o = md.rec && md.rec[t.id];
+              if (mk >= m && o) { delete o.amount; delete o.payerId; delete o.day; delete o.parts; }
+            }
+          }
+        }
         save(); render(); toast(t ? 'Đã lưu thay đổi' : 'Đã thêm khoản định kỳ');
       } },
-    ]);
+    ],
+    d => {
+      const upd = () => {
+        const n = $$('[data-part]', d).filter(b => b.getAttribute('aria-pressed') === 'true').length;
+        $('#partHint', d).textContent = n === pool.length ? `Chia cho cả nhà, mỗi người ${n} phần bằng nhau.` : n ? `Chỉ chia cho ${n} người, người còn lại không phải trả khoản này.` : 'Chọn ít nhất một người.';
+      };
+      $$('[data-part]', d).forEach(b => b.onclick = () => { b.setAttribute('aria-pressed', b.getAttribute('aria-pressed') === 'true' ? 'false' : 'true'); upd(); });
+      $$('[data-scope]', d).forEach(b => b.onclick = () => $$('[data-scope]', d).forEach(o => o.setAttribute('aria-pressed', o === b)));
+      upd();
+      if (!t) setTimeout(() => d.querySelector('[name=name]').focus(), 50);
+    });
 }
 
 /* ---------- Đọc ảnh (Claude API) ---------- */
@@ -695,7 +798,7 @@ function renderAI(v) {
     <p class="sub">Chụp màn hình đoạn chat Messenger rồi chọn hoặc dán ảnh vào đây. Bạn xem lại trước khi lưu.</p>
     ${noKey ? `<div class="notice" style="margin-bottom:12px">Cần API key của Claude để đọc ảnh. <button class="link" data-go="settings">Nhập key trong Cài đặt</button></div>` : ''}
     <div class="drop" id="drop" tabindex="0" role="button" aria-label="Chọn ảnh chụp màn hình">
-      <b>Chọn ảnh</b> <span class="muted">hoặc dán (Ctrl+V), kéo thả vào đây</span>
+      <div class="big">📸</div><b>Chọn ảnh</b> <span class="muted">hoặc dán (Ctrl+V), kéo thả vào đây</span>
       <div class="muted small">Ảnh được thu nhỏ còn tối đa ${MAX_EDGE}px trước khi gửi để đỡ tốn</div>
     </div>
     ${UI.images.length ? `<div class="thumbs">${UI.images.map((x, i) => `<div class="thumb"><img src="${x.url}" alt="Ảnh ${i + 1}"><small>~${num(x.tok)} token</small><button type="button" data-rm="${i}" aria-label="Bỏ ảnh ${i + 1}">×</button></div>`).join('')}</div>` : ''}
@@ -782,8 +885,9 @@ const TOOL = {
         mo_ta:{ type:'string', description:'Nội dung ngắn gọn, tiếng Việt' },
         so_tien:{ type:'integer', description:'Số tiền VND, số nguyên (250k = 250000)' },
         nguoi_chi:{ type:'string', description:'Tên người đã trả, đúng một tên trong danh sách thành viên; rỗng nếu không rõ' },
-        ngay:{ type:'string', description:'YYYY-MM-DD nếu thấy trong ảnh, không thì rỗng' },
-      }, required:['mo_ta', 'so_tien', 'nguoi_chi', 'ngay'] } },
+        ngay:{ type:'string', description:'Ngày trả tiền, dạng YYYY-MM-DD, lấy theo mốc thời gian trong ảnh; rỗng nếu không có' },
+        dinh_ky:{ type:'string', description:'Nếu khoản này là lần trả cho một khoản định kỳ trong danh sách thì ghi đúng tên khoản định kỳ đó, không thì rỗng' },
+      }, required:['mo_ta', 'so_tien', 'nguoi_chi', 'ngay', 'dinh_ky'] } },
       ghi_chu:{ type:'string', description:'Điều cần người dùng kiểm tra lại, nếu có' },
     },
     required:['khoan_chi'],
@@ -799,12 +903,15 @@ function buildRequest() {
     '- Chỉ lấy khoản đã thực sự chi. Bỏ qua dự định, câu hỏi, lời bàn bạc, và các lần chuyển khoản trả nợ giữa thành viên.',
     '- so_tien là số nguyên VND: 250k = 250000, 1tr2 = 1200000, 1.5tr = 1500000, 85 nghìn = 85000.',
     '- nguoi_chi là người gửi tin nhắn báo đã trả, trừ khi tin nói rõ người khác trả. Phải là đúng một tên trong danh sách thành viên; không xác định được thì để rỗng.',
-    '- ngay theo dạng YYYY-MM-DD nếu ảnh có mốc ngày (ví dụ "Hôm qua", "T2 10:30", "4 thg 11"), suy ra từ ngày hôm nay; không có thì để rỗng.',
+    '- ngay là ngày trả tiền, dạng YYYY-MM-DD. Messenger hiện mốc thời gian ở giữa màn hình phía trên các tin nhắn, ví dụ "14:05" (hôm nay), "Hôm qua lúc 20:10", "T2 lúc 10:30", "Thứ Hai", "4 Tháng 11", "4 thg 11, 2026", "04/11". Mỗi tin nhắn lấy mốc gần nhất nằm phía trên nó. Thứ trong tuần (T2…CN) là ngày gần nhất trong 7 ngày qua. Ảnh chụp màn hình có thể có ngày giờ ở thanh trạng thái điện thoại, chỉ dùng nếu đoạn chat không có mốc nào. Tin nhắn ghi rõ ngày trả (vd "đóng tiền nhà ngày 5") thì ưu tiên ngày đó. Không suy ra được thì để rỗng, không đoán.',
+    '- dinh_ky: nếu tin báo đã trả một khoản định kỳ (tiền nhà, internet, phí quản lý...) có trong danh sách khoản định kỳ thì ghi đúng tên khoản đó; các khoản khác để rỗng.',
     '- Không bịa. Một tin nhắn liệt kê nhiều món đã mua chung thì gộp thành một khoản theo tổng tiền nếu có tổng.',
     '- Không có khoản nào thì trả mảng rỗng.',
   ].join('\n');
   const content = UI.images.map(x => ({ type:'image', source:{ type:'base64', media_type:'image/jpeg', data:x.b64 } }));
-  let text = `Thành viên: ${names.join(', ') || '(chưa có)'}.\nHôm nay là ${todayISO()}.`;
+  const recNames = S.recurring.filter(t => activeIn(t, m)).map(t => t.name);
+  const wd = ['Chủ nhật', 'Thứ hai', 'Thứ ba', 'Thứ tư', 'Thứ năm', 'Thứ sáu', 'Thứ bảy'][new Date().getDay()];
+  let text = `Thành viên: ${names.join(', ') || '(chưa có)'}.\nKhoản định kỳ: ${recNames.join(', ') || '(không có)'}.\nHôm nay là ${wd}, ${todayISO()}.`;
   if (me) text += `\nNgười chụp màn hình là ${me.name}: tin nhắn nằm bên phải (bong bóng màu) là của ${me.name}.`;
   if (UI.aiText.trim()) text += `\n\nNội dung chat dán thêm:\n${UI.aiText.trim()}`;
   text += '\n\nHãy ghi lại các khoản chi bằng công cụ ghi_khoan_chi.';
@@ -852,6 +959,13 @@ function matchMember(name, members) {
   const part = members.find(x => fold(x.name).includes(f) || f.includes(fold(x.name)));
   return part ? part.id : '';
 }
+function matchRec(name) {
+  const f = fold(name);
+  if (!f) return '';
+  const list = S.recurring.filter(t => activeIn(t, UI.month));
+  const hit = list.find(t => fold(t.name) === f) || list.find(t => fold(t.name).includes(f) || f.includes(fold(t.name)));
+  return hit ? hit.id : '';
+}
 async function runAI() {
   if (needMembers()) return;
   UI.busy = true; UI.error = ''; render();
@@ -866,7 +980,7 @@ async function runAI() {
     const rows = raw.map(k => {
       const amount = typeof k.so_tien === 'number' ? Math.round(k.so_tien) : parseMoney(k.so_tien);
       const date = /^\d{4}-\d{2}-\d{2}$/.test(k.ngay || '') ? k.ngay : '';
-      return { keep:true, desc:String(k.mo_ta || '').trim(), amount:isNaN(amount) ? 0 : amount, payerId:matchMember(k.nguoi_chi, members), rawPayer:k.nguoi_chi || '', date:date || defaultDate(UI.month) };
+      return { keep:true, desc:String(k.mo_ta || '').trim(), amount:isNaN(amount) ? 0 : amount, payerId:matchMember(k.nguoi_chi, members), rawPayer:k.nguoi_chi || '', date:date || defaultDate(UI.month), noDate:!date, recId:matchRec(k.dinh_ky) };
     });
     UI.lastUsage = logUsage(data, body.model, { imgTok, txtTok, images:UI.images.length, items:rows.length, kind:'read' });
     UI.result = { rows, note:blk && blk.input && blk.input.ghi_chu || '' };
@@ -880,26 +994,32 @@ async function runAI() {
 function renderReview(r) {
   if (!r.rows.length) return '';
   const members = activeMembers(UI.month);
+  const recs = S.recurring.filter(t => activeIn(t, UI.month));
   const kept = r.rows.filter(x => x.keep);
   return `
     <h2>Xem lại trước khi lưu</h2>
     ${r.note ? `<div class="notice" style="margin-bottom:10px">${esc(r.note)}</div>` : ''}
-    <div class="panel" id="review">${r.rows.map((x, i) => `
+    <div class="list" id="review">${r.rows.map((x, i) => `
       <div class="rv ${x.keep ? '' : 'off'}">
         <input type="checkbox" class="check" data-k="${i}" ${x.keep ? 'checked' : ''} aria-label="Lưu khoản ${i + 1}">
         <div class="fields">
           <input class="inp full" data-f="desc" data-i="${i}" value="${esc(x.desc)}" aria-label="Nội dung">
           <input class="inp" data-f="amount" data-i="${i}" value="${num(x.amount)}" inputmode="text" aria-label="Số tiền">
-          <input class="inp" type="date" data-f="date" data-i="${i}" value="${esc(x.date)}" aria-label="Ngày">
+          <input class="inp" type="date" data-f="date" data-i="${i}" value="${esc(x.date)}" aria-label="Ngày trả" style="${x.noDate ? 'border-color:var(--neg)' : ''}">
           <select class="inp full" data-f="payerId" data-i="${i}" aria-label="Ai trả">
             ${x.payerId ? '' : `<option value="">${x.rawPayer ? 'Không khớp tên "' + esc(x.rawPayer) + '", chọn người' : 'Chọn người trả'}</option>`}
             ${members.map(mm => `<option value="${mm.id}" ${mm.id === x.payerId ? 'selected' : ''}>${esc(mm.name)}</option>`).join('')}
           </select>
+          ${recs.length ? `<select class="inp full" data-f="recId" data-i="${i}" aria-label="Ghi vào">
+            <option value="">Ghi là khoản phát sinh mới</option>
+            ${recs.map(t => `<option value="${t.id}" ${t.id === x.recId ? 'selected' : ''}>Đây là tiền ${esc(t.name)} của tháng</option>`).join('')}
+          </select>` : ''}
+          ${x.noDate ? `<div class="hint full" style="color:var(--neg);margin:0">Không thấy ngày trong ảnh, đang để tạm ${esc(fmtDate(x.date))}. Kiểm tra lại ngày trả.</div>` : ''}
         </div>
       </div>`).join('')}
     </div>
     <div class="btnrow" style="margin-top:12px">
-      <button class="btn primary" id="saveRv">Lưu ${kept.length} khoản chi</button>
+      <button class="btn primary" id="saveRv">Lưu ${kept.length} khoản</button>
       <button class="btn" id="clearRv">Bỏ kết quả</button>
     </div>`;
 }
@@ -909,7 +1029,7 @@ function wireReview(v) {
   $$('[data-f]', v).forEach(inp => inp.onchange = () => {
     const row = r.rows[inp.dataset.i];
     if (inp.dataset.f === 'amount') { const a = parseMoney(inp.value); row.amount = isNaN(a) ? 0 : a; inp.value = num(row.amount); }
-    else row[inp.dataset.f] = inp.value;
+    else { row[inp.dataset.f] = inp.value; if (inp.dataset.f === 'date') { row.noDate = false; render(); } }
   });
   $('#saveRv').onclick = () => {
     const rows = r.rows.filter(x => x.keep);
@@ -920,11 +1040,17 @@ function wireReview(v) {
     for (const x of rows) {
       const month = (x.date || defaultDate(UI.month)).slice(0, 7);
       months.add(month);
+      const tpl = x.recId && S.recurring.find(t => t.id === x.recId && activeIn(t, month));
+      if (tpl) {
+        const o = (monthData(month).rec[tpl.id] ||= {});
+        Object.assign(o, { on:true, amount:x.amount, payerId:x.payerId, day:Number(x.date.slice(8, 10)) || null });
+        continue;
+      }
       S.expenses.push({ id:uid(), source:'ai', desc:x.desc || 'Khoản chi', amount:x.amount, payerId:x.payerId, date:x.date, month, participants:activeMembers(month).map(mm => mm.id) });
     }
     save();
     UI.result = null; UI.images = []; UI.aiText = ''; UI.error = '';
-    toast(`Đã lưu ${rows.length} khoản chi`);
+    toast(`Đã lưu ${rows.length} khoản`);
     if (months.size === 1) UI.month = [...months][0];
     go('expenses');
   };
@@ -999,10 +1125,13 @@ function renderSettings(v) {
   v.innerHTML = `
     <h2>Thành viên</h2>
     <p class="sub">Mọi khoản chi chia đều cho những người trong danh sách.</p>
-    <div class="panel">${mem.length ? mem.map(x => `
-      <button class="item" data-mem="${x.id}">${dotEl(x)}<div class="grow"><div class="t">${esc(x.name)}</div>${x.id === s.meId ? '<div class="meta">Là bạn</div>' : ''}</div><span class="muted small">Sửa</span></button>`).join('') : '<div class="empty">Chưa có ai. Thêm cả bạn nữa nhé.</div>'}
+    <div class="list">${mem.length ? mem.map(x => `
+      <button class="tile" data-mem="${x.id}">${avEl(x, 'lg')}<div class="grow"><div class="t">${esc(x.name)}</div>${x.id === s.meId ? '<div class="meta">Là bạn</div>' : ''}</div><span class="muted small">Sửa</span></button>`).join('') : '<div class="empty"><div class="big">👋</div>Chưa có ai. Thêm cả bạn nữa nhé.</div>'}
     </div>
-    <button class="btn" id="addMem" style="margin-top:10px">Thêm thành viên</button>
+    <button class="btn soft" id="addMem" style="margin-top:10px">Thêm thành viên</button>
+
+    <h2>Giao diện</h2>
+    <div class="seg" role="group" aria-label="Chế độ màu">${[['light', 'Sáng'], ['dark', 'Tối'], ['auto', 'Theo máy']].map(([k, l]) => `<button type="button" data-theme-opt="${k}" aria-pressed="${(s.theme || 'light') === k}">${l}</button>`).join('')}</div>
 
     <h2>Đọc ảnh bằng Claude</h2>
     <div class="panel pad">
@@ -1040,6 +1169,7 @@ function renderSettings(v) {
 
   $$('[data-mem]', v).forEach(b => b.onclick = () => editMember(b.dataset.mem));
   $('#addMem').onclick = () => editMember(null);
+  $$('[data-theme-opt]', v).forEach(b => b.onclick = () => { s.theme = b.dataset.themeOpt; save(); applyTheme(); render(); });
   $('#apiKey').onchange = e => { s.apiKey = e.target.value.trim(); save(); render(); };
   $('#showKey').onclick = () => { s.apiKey = $('#apiKey').value.trim(); save(); UI.showKey = !UI.showKey; render(); };
   $('#meId').onchange = e => { s.meId = e.target.value; save(); render(); };
@@ -1123,6 +1253,8 @@ $('#importIn').addEventListener('change', async e => {
   } catch { toast('File không đúng định dạng sao lưu'); }
 });
 
+applyTheme();
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', applyTheme);
 render();
 </script>
 </body>
